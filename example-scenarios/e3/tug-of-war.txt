@@ -1,0 +1,400 @@
+<START_SCENARIO>
+BACKGROUND
+In this event, the athletes are competing in matches of tug-of-war. In each round, the team that wins the round depends on how hard the athletes collectively pull, based on their intrinsic strength modulated by other factors including how much effort they put in to that round.
+Athletes compete either individually or as a team.
+All matches take place on the same day.
+
+CONDITIONS
+We know that Bob is strong and Sue is incredibly strong.
+Tom is intrinsically stronger than Mary.
+In the first match, Bob and Mary beat Tom and Sue.
+In the second match, Sue beat Mary.
+In the third match, Bob and Sue lost to Tom and Jim. 
+In the fourth match, Jim beat Bob.
+Sue started feeling tired after the last match that she played.
+Mary started feeling particularly energized after her last match so far today.
+Mary didn't really try in the second match.
+Tom slipped during the first match.
+Sue sprained her ankle before the third match.
+Bob is an inexperienced tug of war player.
+
+QUERIES
+Query 1: Out of 100 random athletes, where do you think Bob ranks in terms of intrinsic strength?
+Query 2: Out of 100 random athletes, where do you think Mary ranks in terms of intrinsic strength?
+Query 3: On a percentage scale from 0 to 100%, how much effort do you think Jim put into the third match?
+Query 4: On a percentage scale from 0 to 100%, how much effort do you think Bob put into the first match?
+Query 5: In a new match later this same day between Bob  (Team 1) and Jim (Team 2), who would win and by how much?
+Query 6: In a new match later this same day between Sue and Paul (Team 1) and Jim and Bob (Team 2), who would win and by how much? 
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+// We know that Bob is strong and Sue is incredibly strong.
+  condition(is_strong({athlete: 'bob'}) && is_incredibly_strong({athlete: 'sue'}))
+// Tom is intrinsically stronger than Mary.
+  condition(intrinsic_strength({athlete: 'tom'}) >= intrinsic_strength({athlete: 'mary'}))
+// In the first match, Bob and Mary beat Tom and Sue.
+  condition(beat({team1: ['bob', 'mary'], team2: ['tom', 'sue'], match: 1}))
+// In the second match, Sue beat Mary.
+  condition(beat({team1: ['sue'], team2: ['mary'], match: 2}))
+// In the third match, Bob and Sue lost to Tom and Jim. 
+  condition(lost({team1: ['bob', 'sue'], team2: ['tom', 'jim'], match: 3}))
+// In the fourth match, Jim beat Bob.
+  condition(beat({team1: ['jim'], team2: ['bob'], match: 4}))
+// Sue started feeling tired after the last match that she played.
+  condition(started_feeling_tired_after_match({athlete: 'sue', match: 3}))
+// Mary started feeling particularly energized after her last match today.
+  condition(started_feeling_energized_after_match({athlete: 'mary', match: 2}))
+// Mary didn't really try in the second match.
+  condition(didnt_really_try_in_match({athlete: 'mary', match: 2}))
+// Tom slipped during the first match.
+  condition(slipped_in_match({athlete: 'tom', match: 1}))
+// Sue sprained her ankle before the third match.
+  condition(sprained_ankle_before_match({athlete: 'sue', match: 3}))
+// Bob is an inexperienced tug of war player.
+  condition(inexperienced_tug_of_war_player({athlete: 'bob'}))
+
+// QUERIES
+// Query 1: Out of 100 random athletes, where do you think Bob ranks in terms of intrinsic strength? 
+  intrinsic_strength_rank({athlete: 'bob', out_of_n_athletes: 100})
+// Query 2: Out of 100 random athletes, where do you think Mary ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'mary', out_of_n_athletes: 100})
+// Query 3: On a percentage scale from 0 to 100%, how much effort do you think Jim put into the third match?
+  effort_level_in_match({athlete: 'jim', match: 3})
+// Query 4: On a percentage scale from 0 to 100%, how much effort do you think Bob put into the first match?
+  effort_level_in_match({athlete: 'bob', match: 1})
+// Query 5: In a new match later this same day between Bob  (Team 1) and Jim (Team 2), who would win and by how much?
+   who_would_win_by_how_much({team1: ['bob'], team2: ['jim'], match: 5})
+// Query 6: In a new match later this same day between Sue and Paul (Team 1) and Jim and Bob (Team 2), who would win and by how much? 
+  who_would_win_by_how_much({team1: ['sue', 'paul'], team2: ['jim', 'bob'], match: 6})
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+ 
+<START_SCRATCHPAD>
+First, let's reason about the role of strength in this scenario.
+Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+
+An athlete who is 'strong' has an intrinsic strength higher than some threshold that is higher than average. 
+
+An athlete who is 'incredibly strong' has an intrinsic strength higher than some threshold that is multiple SD higher than average.
+
+An 'inexperienced' tug of war player is probably not as strong and is average or less than average strength since they haven't worked out as much.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be more skilled than out of N total random athletes.
+
+The amount of effort that an athlete puts into any given match is a continuous parameter. We'll think of it as a 0-100% scale, where 0 is no effort at all, and 100% is maximum effort. Athletes also vary in the effort that they put into any given match. Most of the time, people pull with a moderately high amount of effort. Sometimes, an athlete won't put in much effort and will pull with only a fraction of their strength. Other times, they may put in a lot of effort and pull extra hard, beyond what their intrinsic strength would suggest. This is contingent on an athlete's intrinsic strength, because stronger athletes probably tend to be more likely to put in extra effort, and weaker athletes probably tend to be more likely to put in less effort.
+
+How much someone pulls on average if they are pulling with low, moderately high, or extra high effort.
+
+An athlete who 'didn't really try' in a match didn't put a lot of effort into the match.
+
+Whether or not an athlete starts feeling tired after a match is somewhat but not that rare.
+
+Starting to feel tired is a temporally extended event that affects future matches. We will define a helper function to check if they started to feel tired after any particular match.
+
+Whether or not an athlete starts feeling energized after a match is actually pretty rare.
+
+Starting to feel energized is a temporally extended event that affects future matches. We will define a helper function to check if they started to feel energized after any particular match.
+
+Whether or not an athlete slips in a match occurs pretty rarely in general. This has effects that are just specific to a particular match.
+
+Whether or not an athlete sprains their ankle before a specific match is also pretty unlikely.
+
+Spraining an ankle is a temporally extended event that affects future matches. We will define a helper function to check if they sprained their ankle in any previous matches.
+
+The effective strength with which any given athlete pulls in a particular match is determined by their intrinsic strength, but is (1) modulated by how much effort they put into the current match; (2) reduced if they felt tired after any previous match; (3) increased if they feel energized after any previous match; (4) reduced if they sprained in ankle before any prevoius match; and (5) reduced if they slipped in the current match.
+
+The total amount that a team pulls in a given match is the described in the background as how hard the athletes COLLECTIVELY pull, or the total sum of combined effective strengths of all the athletes on that team in a match.
+
+A team beats another if their team's total pulling strength is greater than the other team.
+
+A team loses if their team did not beat the other team in a given match.
+
+To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+
+<START_CONCEPT_TRACE>
+- intrinsic_strength
+- intrinsic_strength_rank
+  - depends on: intrinsic_strength
+- is_strong
+  - depends on: intrinsic_strength
+- is_incredibly_strong
+  - depends on: intrinsic_strength
+- inexperienced_tug_of_war_player
+  - depends on: intrinsic_strength
+- intrinsic_strength_rank
+  - depends on: intrinsic_strength
+- effort_level_in_match
+  - depends on: intrinsic_strength
+- started_feeling_tired_after_match
+- started_feeling_tired_after_any_previous_match
+  - depends on: started_feeling_tired_after_match
+- started_feeling_energized_after_match
+- started_feeling_energized_after_any_previous_match
+  - depends on: started_feeling_energized_after_match
+
+- didnt_really_try_in_match
+  - depends on: effort_level_in_match
+- slipped_in_match
+- sprained_ankle_before_match
+- has_sprained_ankle_in_any_previous_match
+  - depends on: sprained_ankle_before_match
+- effective_strength_in_match
+  - depends on: intrinsic_strength, effort_level_in_match, has_sprained_ankle_in_any_previous_match, slipped_in_match
+- total_pulling_strength_for_team
+  - depends on: effective_strength_in_match
+- beat:
+  - depends on: total_pulling_strength_for_team
+- lost:
+  - depends on: beat
+- who_would_win_by_how_much
+  - depends on: lost
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+<START_WEBPPL_MODEL>
+
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+    var intrinsic_strength = mem(function ({athlete}) {
+      // Arbitrary measure of strength, variance is somewhat wide.
+      var parameter_intrinsic_strength_average = 100;
+      var parameter_intrinsic_strength_variance = 20;
+      return Math.max(gaussian(parameter_intrinsic_strength_average, parameter_intrinsic_strength_variance), 0)
+    })
+
+    // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // An athlete who is 'strong' has an intrinsic strength higher than some threshold that is higher than average. 
+    var is_strong = function({athlete}) {
+      var is_strong_threshold = 100;
+      return intrinsic_strength({athlete: athlete}) > is_strong_threshold;
+    } 
+
+    // An athlete who is 'incredibly strong' has an intrinsic strength higher than some threshold that is multiple SD higher than average.
+    var is_incredibly_strong = function({athlete}){
+      var is_incredibly_strong_threshold = 140;
+      return intrinsic_strength({athlete: athlete}) > is_incredibly_strong_threshold;
+    }
+
+    // An 'inexperienced' tug of war player is probably not as strong and is average or less than average strength since they haven't worked out as much.
+    var inexperienced_tug_of_war_player = function({athlete}) {
+      var inexperienced_tug_of_war_player_threshold = 100;
+      return intrinsic_strength({athlete: athlete}) < inexperienced_tug_of_war_player_threshold;
+    }
+
+    // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be more skilled than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // The amount of effort that an athlete puts into any given match is a continuous parameter. We'll think of it as a 0-100% scale, where 0 is no effort at all, and 100% is maximum effort. Athletes also vary in the effort that they put into any given match. Most of the time, people pull with a moderately high amount of effort. Sometimes, an athlete won't put in much effort and will pull with only a fraction of their strength. Other times, they may put in a lot of effort and pull extra hard, beyond what their intrinsic strength would suggest. This is contingent on an athlete's intrinsic strength, because stronger athletes probably tend to be more likely to put in extra effort, and weaker athletes probably tend to be more likely to put in less effort.
+    var effort_level_in_match = mem(function({athlete, match}) {
+      var strong_threshold = 140; // Two standard deviations above average strength.
+      var weak_threshold = 90; // Below average strength.
+
+      // Prior that an athlete is low, moderately high, or extra high effort on a given round.
+      var parameter_low_effort_prior = 
+          intrinsic_strength(athlete) > strong_threshold ? 0.05 : // Strong athletes rarely put in little effort 
+               intrinsic_strength(athlete) < weak_threshold ?  0.8 : // Weak athletes often put in little effort
+                                                     0.2;  // Otherwise generally don't put in little effort
+      var parameter_moderate_effort_prior = intrinsic_strength(athlete) > strong_threshold ? 0.15 : // Strong athletes also don't generally put in moderate effort
+               intrinsic_strength(athlete) < weak_threshold ?  0.15 : // Weak athletes also don't often put in moderate effort
+                                                        0.6; // Medium athletes often do put in moderate effort
+      var parameter_extra_high_effort_prior = intrinsic_strength(athlete) > strong_threshold ? 0.8 :  // Strong athletes often put in a lot of effort
+               intrinsic_strength(athlete) < weak_threshold ?  0.05 : // Weak athletes rarely put in extra high effort
+                                                        0.2; // Otherwise generally don't put in extra high effort
+
+      // How much someone pulls on average if they are pulling with low, moderately high, or extra high effort.
+      var low_effort_average = 40; 
+      var moderate_effort_average = 60;
+      var extra_high_effort_average = 80;
+      var effort_variance = 10;
+      
+     
+      var effort_average = categorical({ps: [parameter_low_effort_prior, parameter_moderate_effort_prior, parameter_extra_high_effort_prior], 
+      vs: [low_effort_average, moderate_effort_average, extra_high_effort_average]});
+
+      return Math.min(Math.max(gaussian(effort_average, effort_variance), 0), 100)
+    })
+
+    // Whether or not an athlete starts feeling tired after a match is somewhat but not that rare.
+    var started_feeling_tired_after_match = mem(function({athlete, match}) {
+      var likelihood_of_feeling_tired_after_match = 0.1;
+      return flip(likelihood_of_feeling_tired_after_match);
+    })
+
+    // Starting to feel tired is a temporally extended event that affects future matches. We will define a helper function to check if they started to feel tired after any previous match.
+    var started_feeling_tired_after_any_previous_match = function({athlete, current_match}) {
+        // It says AFTER, so consider if they started feeling tired in any previous match after the current one, not including the current match (exclusive).
+        return any_previous_time_exclusive(
+        function(prev_match) {
+          return started_feeling_tired_after_match({athlete: athlete, match: prev_match})
+        }, current_match)
+    }
+
+    // Whether or not an athlete starts feeling energized after a match is actually pretty rare.
+    var started_feeling_energized_after_match = mem(function({athlete, match}) {
+      var likelihood_of_feeling_energized_after_match = 0.05;
+      return flip(likelihood_of_feeling_energized_after_match);
+    })
+
+    // Starting to feel energized is a temporally extended event that affects future matches. We will define a helper function to check if they started to feel energized after any previous match.
+    var started_feeling_energized_after_any_previous_match = function({athlete, current_match}) {
+         // It says AFTER, so consider if they started feeling energized in any previous match after the current one, not including the current match (exclusive).
+        return any_previous_time_exclusive(
+        function(prev_match) {
+          return started_feeling_energized_after_match({athlete: athlete, match: prev_match})
+        }, current_match)
+    }
+
+    // An athlete who 'didn't really try' in a match didn't put a lot of effort into the match.
+    var didnt_really_try_in_match = mem(function({athlete, match}) {
+      var didnt_really_try_in_match_threshold = 40; 
+      return effort_level_in_match({athlete: athlete, match: match}) < didnt_really_try_in_match_threshold;
+    })
+
+    // Whether or not an athlete slips in a match occurs pretty rarely in general.
+    var slipped_in_match = mem(function({athlete, match}){
+      var likelihood_of_slipping_in_match = 0.05;
+      return flip(likelihood_of_slipping_in_match); 
+    })
+
+    // Whether or not an athlete sprains their ankle before a specific match is also pretty unlikely.
+    var sprained_ankle_before_match = mem(function({athlete, match}) {
+        var likelihood_of_spraining_ankle_in_race = 0.05;
+      return flip(likelihood_of_spraining_ankle_in_race ); 
+    })
+
+    // Spraining an ankle is a temporally extended event that affects future matches. We will define a helper function to check if they sprained their ankle in any previous matches.
+    var has_sprained_ankle_in_any_previous_match = function({athlete, current_match}) {
+        // If any sprained_ankle_before_match events occurred in any previous N  rounds from 0 to the current round. It says before, so use the inclusive function.
+        return any_previous_time_inclusive(
+        function(prev_match) {
+          return sprained_ankle_before_match({athlete: athlete, match: prev_match})
+        }, current_match)
+    }
+    
+    // The effective strength with which any given athlete pulls in a particular match is determined by their intrinsic strength, but is (1) modulated by how much effort they put into the current match; (2) reduced if they felt tired after any previous match; (3) increased if they feel energized after any previous match; (4) reduced if they sprained in ankle before any prevoius match; and (5) reduced if they slipped in the current match.
+    var effective_strength_in_match = mem(function({athlete, match}) {
+      var base_pulling_strength_in_match =  intrinsic_strength({athlete : athlete});
+
+      var average_effort = 50;
+      // Modulated by how much effort they put into the current match. We can directly check the effort they put into this specific match.
+      var strength_modulated_for_effort_level = (effort_level_in_match({athlete: athlete, match: match}) / average_effort) * base_pulling_strength_in_match;
+
+      //  Reduced if they felt tired after any previous match. Use the helper function to check if they felt tired after any previous match.
+      var strength_adjusted_for_tired = started_feeling_tired_after_any_previous_match({athlete: athlete, current_match : match}) ? strength_modulated_for_effort_level * 0.8 : strength_modulated_for_effort_level;
+
+      // Increased if they feel energized after any previous match. Use the helper function to check if they felt energized after any previous match.
+      var strength_adjusted_for_energized = started_feeling_energized_after_any_previous_match({athlete: athlete, current_match : match}) ? strength_adjusted_for_tired * 1.2 : strength_adjusted_for_tired;
+
+      // Reduced if they sprained in ankle before any previous match. Use the helper function to check if they sprained their ankle before any previous match.
+      var strength_adjusted_for_sprained_ankle = has_sprained_ankle_in_any_previous_match({athlete: athlete, current_match: match}) ? strength_adjusted_for_energized * 0.8 : strength_adjusted_for_energized;
+
+      // Reduced if they slipped in the current match. We can directly check if they slipped in the current match.
+      var strength_adjusted_for_slipping = slipped_in_match({athlete: athlete, match: match}) ? strength_adjusted_for_sprained_ankle * 0.8 : strength_adjusted_for_sprained_ankle;
+
+      return strength_adjusted_for_slipping; 
+    })
+
+    // The total amount that a team pulls in a given match is the described in the background as how hard the athletes COLLECTIVELY pull, or the total sum of combined effective strengths of all the athletes on that team in a match.
+    var total_pulling_strength_for_team = function({team, match}) {
+      // Each athlete contributes some amount of pulling
+      // Because team includes a list of athletes, we need to map over them
+      // Use a sum for collectively pull or combined effective strength
+      return sum(map(function(athlete) { return effective_strength_in_match({athlete: athlete, match: match}) }, team))
+    }
+
+    // A team beats another if their team's total pulling strength is greater than the other team.
+    var beat = function({team1, team2, match}){
+      // Assert that the appropriate team wins
+      // Return true if team1 won
+      return total_pulling_strength_for_team({team: team1, match: match}) > total_pulling_strength_for_team({team: team2, match: match})
+    }
+
+    // A team loses if their team did not beat the other team in a given match.
+    var lost = function({team1, team2, match}){ 
+      return !beat({team1: team1, team2: team2, match: match})
+    }
+
+    // To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+    var who_would_win_by_how_much = function({team1, team2, match}) {
+      // 0% is Team 1 would defintiely win, 100% is Team 2 would definitely win, so we will just calculate the likelihood that team 2 would win here.
+      // Simulate random possible future matches based on random match IDs, starting with the ID of the current match to avoid any matches we've seen so far. We'll simulate out of 5 random matches.
+      var num_future_matches_to_simulate = 5;
+      var random_future_match_ids = mapN(function(x) {return Math.round(uniform(match+1, 20))}, num_future_matches_to_simulate);
+
+      // Calculate how many matches that team 2 would have won, meaning that team 1 lost.
+      var simulated_matches_won_by_team_2 = sum(map(
+            function(random_future_match_id) {
+              return lost({team1: team1, team2: team2, match: random_future_match_id})}, random_future_match_ids))
+
+      // Return the likelihood that team 2 won.
+      return simulated_matches_won_by_team_2 / num_future_matches_to_simulate;
+    }
+    
+    
+    // CONDITIONS
+    // We know that Bob is quite strong and Sue is incredibly strong.
+    condition(is_strong({athlete: 'bob'}) && is_incredibly_strong({athlete: 'sue'}))
+    // Tom is intrinsically stronger than Mary.
+    condition(intrinsic_strength({athlete: 'tom'}) >= intrinsic_strength({athlete: 'mary'}))
+    // In the first match, Bob and Mary beat Tom and Sue.
+    condition(beat({team1: ['bob', 'mary'], team2: ['tom', 'sue'], match: 1}))
+    // In the second match, Sue beat Mary.
+    condition(beat({team1: ['sue'], team2: ['mary'], match: 2}))
+    // In the third match, Bob and Sue lost to Tom and Jim. 
+    condition(lost({team1: ['bob', 'sue'], team2: ['tom', 'jim'], match: 3}))
+    // Sue started feeling tired after the last match that she played.
+    condition(started_feeling_tired_after_match({athlete: 'sue', match: 3}))
+    // Mary started feeling particularly energized after her last match today.
+    condition(started_feeling_energized_after_match({athlete: 'mary', match: 2}))
+    // Mary didn't really try in the second match.
+    condition(didnt_really_try_in_match({athlete: 'mary', match: 2}))
+    // Tom slipped during the first match. 
+    condition(slipped_in_match({athlete: 'tom', match: 1}))
+    // Sue sprained her ankle before the third match.
+    condition(sprained_ankle_before_match({athlete: 'sue', match: 3}))
+    // Bob is an inexperienced tug of war player.
+    condition(inexperienced_tug_of_war_player({athlete: 'bob'}))
+    
+    // QUERIES
+    // Query 1: Out of 100 random athletes, where do you think Bob ranks in terms of intrinsic strength? 
+    // Query 2: Out of 100 random athletes, where do you think Mary ranks in terms of intrinsic strength?
+    // Query 3: On a percentage scale from 0 to 100%, how much effort do you think Jim put into the third match?
+    // Query 4: On a percentage scale from 0 to 100%, how much effort do you think Bob put into the first match?
+    // Query 5: In a new match later this same day between Bob  (Team 1) and Jim (Team 2), who would win and by how much?
+    // Query 6: In a new match later this same day between Sue and Paul (Team 1) and Jim and Bob (Team 2), who would win and by how much? 
+    return {
+        query1: intrinsic_strength_rank({athlete: 'bob', out_of_n_athletes: 100}),
+        query2: intrinsic_strength_rank({athlete: 'mary', out_of_n_athletes: 100}),
+        query3: effort_level_in_match({athlete: 'jim', match: 3}),
+        query4: effort_level_in_match({athlete: 'bob', match: 1}),
+        query5: who_would_win_by_how_much({team1: ['bob'], team2: ['jim'], match: 5}),
+        query6: 
+  who_would_win_by_how_much({team1: ['sue', 'paul'], team2: ['jim', 'bob'], match: 6})
+    }
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>

@@ -1,0 +1,422 @@
+<START_SCENARIO>
+BACKGROUND
+In this event, teams of players are competing in rounds of a biathlon, a winter sport that combines cross-country skiing rounds and rifle shooting. In each round, the team that wins depends on the average speed with which the athletes are able to ski, based on their intrinsic strength, as well as each team member's shooting accuracy in that particular round.
+Athletes compete either individually or as a team.
+All roundes take place on the same day.
+
+CONDITIONS
+In the first round, Billy and Emery beat Alice and Sam.
+In the second round, Billy and Drew beat Alice and Lou.
+In the third round, Billy and Ness beat Alice and Casey.
+In the fourth round, Billy and Emery lost to Alice and Sam.
+Ness was overcome by exhaustion after the round they played in.
+Casey, on the other hand, started feeling really fired up after that round.
+In Drew's round, they did help win but wound up burning their hand on the gun in a way that will make them much less accurate at shooting in the future.
+Alice fell while skiing during the first round.
+Sam injured her wrist before the fourth round.
+Lou does not have a lot of athletic experience.
+Billy is an award winning biathlete.
+
+QUERIES
+Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+In the first round, Billy and Emery beat Alice and Sam.
+  condition(beat({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 1}))
+In the second round, Billy and Drew beat Alice and Lou.
+  condition(beat({team1: ['billy', 'drew'], team2: ['alice', 'lou'], round: 2}))
+In the third round, Billy and Ness beat Alice and Casey.
+  condition(beat({team1: ['billy', 'ness'], team2: ['alice', 'casey'], round: 3}))
+In the fourth round, Billy and Emery lost to Alice and Sam.
+  condition(lost({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 4}))
+Ness was overcome by exhaustion after the round they played in.
+  condition(overcome_with_exhaustion_after_round({athlete: 'ness', round: 3}))
+Casey, on the other hand, started feeling really fired up after that round.
+  condition(started_feeling_really_fired_up_after_round({athlete: 'casey', round: 3}))
+In Drew's round, they did help win but wound up burning their hand on the gun in a way that will make them much less accurate at shooting in the future.
+  condition(burned_hand_on_gun_in_round({athlete: 'drew', round: 2}))
+Alice fell while skiing during the first round.
+  condition(fell_while_skiing_in_round({athlete: 'alice', round: 1}))
+Sam injured her wrist before the fourth round.
+  condition(injured_wrist_before_round({athlete: 'sam', round: 4}))
+Lou does not have a lot of athletic experience.
+  condition(not_a_lot_of_athletic_experience({athlete: 'lou'}))
+Billy is an award winning biathlete.
+  condition(is_award_winning_biathlete({athlete: 'billy'}))
+
+// QUERIES
+Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'billy', out_of_n_athletes: 100})
+Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'emery', out_of_n_athletes: 100})
+Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100})
+Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+   accuracy_at_shooting_in_round({athlete: 'billy', round: 4}) 
+Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+  accuracy_at_shooting_in_round({athlete: 'emery', round: 4}) 
+Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+  accuracy_at_shooting_in_round({athlete: 'alice', round: 4}) 
+Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+  who_would_win_by_how_much({team1: ['billy', 'emery'], team2: ['drew', 'casey'], round: 5})
+Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+  who_would_win_by_how_much({team1: ['billy', 'alice'], team2: ['emery', 'sam'], round: 6})
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+ 
+<START_SCRATCHPAD>
+First, let's reason about the role of strength in this scenario.
+Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes
+
+An athlete with not a lot of athletic experience is probably less strong than most other athletes.
+
+An athlete who is an award winning biathlete probably has more strength than most others.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+
+Whether or not an athlete is overcome by exhaustion after a given round is pretty rare.
+Becoming overcome with exhaustion is a temporally extended event that affects future rounds. We will define a helper function to check if they started to feel tired after any previous round.
+
+Whether or not an athlete starts feeling really fired up after a round is actually pretty rare.
+Starting to feel really fired up is a temporally extended event that affects future rounds. We will define a helper function to check if they started to feel energized after any previous round.
+
+Whether or not an athlete falls while skiing round occurs pretty rarely in general, and is specific to a particular round
+
+Whether or not an athlete burns their hand on a gun in a particular round is rare.
+The sentence specifically says that burning ones hand on a gun doesnt necessarily impact the particular round, but it will certaintly impact future rounds. We will define a helper function to check if they started to burned their hand after any previous round.
+
+Whether or not an athlete injures their wrist before a round is quite rare.
+Injuring a wrist is a temporally extended event that affects future rounds. We will define a helper function to check if they injured their wrist in any previous rounds.
+
+An athlete's shooting accuracy varies from round to round. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. Athlete's shooting accuracy in any given round is also somewhat down to chance. Despite what the description says, intuitively, accuracy probably varies as a function of intrinsic strength, because strong athletes tend to be better shots and weaker athletes who are less experienced in biathalon tend to miss lots of the shots they take.
+
+The effective speed with which any given athlete skis in a particular round is determined by their intrinsic strength, but is (1) reduced if they were overcome by exhaustion in any previous round; (2) increased if they started feeling really fired up in any previous round; (3) reduced if they fell while skiing in the current round.
+
+A team's biathalon score in a round is the average speed of all of its team members, plus the average shooting accuracy in that particular round.
+
+A biathalon team beats another if their team's score is higher in that round.
+
+A biathalon team loses to another team if they did not beat that team in a given round.
+
+To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+
+<START_CONCEPT_TRACE>
+- intrinsic_strength
+
+- not_a_lot_of_athletic_experience
+  - depends on: intrinsic_strength
+
+- is_award_winning_biathlete
+  - depends on: intrinsic_strength
+
+- intrinsic_strength_rank
+  - depends on: intrinsic_strength
+
+- overcome_with_exhaustion_after_round
+- overcome_with_exhaustion_after_any_previous_round
+  - depends on: overcome_with_exhaustion_after_round
+
+- started_feeling_really_fired_up_after_round
+- started_feeling_really_fired_up_after_any_previous_round
+  - depends on: started_feeling_really_fired_up_after_round
+
+- fell_while_skiing_in_round
+
+- burned_hand_on_gun_in_round
+- burned_hand_on_gun_in_any_previous_round
+ - depends on: burned_hand_on_gun_in_round
+
+- injured_wrist_before_round
+- has_injured_wrist_in_any_previous_round
+  - depends on: injured_wrist_before_round
+
+- accuracy_at_shooting_in_round
+  - depends on: intrinsic_strength, burned_hand_on_gun_in_any_previous_round, has_injured_wrist_in_any_previous_round
+
+-  effective_athlete_speed_in_round
+  - depends on: intrinsic_strength, overcome_with_exhaustion_after_any_previous_round, started_feeling_really_fired_up_after_any_previous_round, fell_while_skiing_in_round
+
+- team_biathalon_score_in_round
+  - depends on: effective_athlete_speed_in_round, accuracy_at_shooting_in_round
+- beat 
+  - depends on: team_biathalon_score_in_round
+- lost
+  - depends on: beat
+- who_would_win_by_how_much
+  - depends on: lost
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+<START_WEBPPL_MODEL>
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+    var intrinsic_strength = mem(function ({athlete}) {
+      // We'll imagine that players tend to be weak, average, or strong, and uniformly around that.
+      var parameter_weak_prior = 0.33;
+      var parameter_average_prior = 0.33;
+      var parameter_strong_prior = 0.34;
+
+      // On an arbitrary scale centered around 100.
+      var weak_mean = 80; 
+      var average_mean = 100;
+      var strong_mean = 140;
+      var parameter_intrinsic_strength_variance = 10;
+
+      var parameter_intrinsic_strength_average = categorical({ps: [parameter_weak_prior, parameter_average_prior, parameter_strong_prior], 
+      vs: [weak_mean, average_mean, strong_mean]});
+
+      return Math.max(gaussian(parameter_intrinsic_strength_average ,  parameter_intrinsic_strength_variance), 0);
+    })
+
+    // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // An athlete with not a lot of athletic experience is probably less strong than most other athletes.
+    var not_a_lot_of_athletic_experience = function({athlete}) {
+      var inexperienced_athlete_strength_threshold = 100; // Less than average
+      return intrinsic_strength({athlete: athlete}) < inexperienced_athlete_strength_threshold;
+    }
+
+    // An athlete who is an award winning biathlete probably has more strength than most others.
+    var is_award_winning_biathlete = function({athlete}){
+      var is_award_winning_strength_threshold = 140;
+      return intrinsic_strength({athlete: athlete}) > is_award_winning_strength_threshold;
+    }
+
+    // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // Whether or not an athlete is overcome by exhaustion after a given round is pretty rare.
+    var overcome_with_exhaustion_after_round = mem(function({athlete, round}) {
+      var likelihood_of_being_overcome_with_exhaustion_after_round = 0.05;
+      return flip(likelihood_of_being_overcome_with_exhaustion_after_round);
+    })
+
+    // Becoming overcome with exhaustion is a temporally extended event that affects future rounds. We will define a helper function to check if they started to feel tired after any previous round.
+    var overcome_with_exhaustion_after_any_previous_round = function({athlete, current_round}) {
+        // It says AFTER, so consider if they started feeling tired in any previous round after the current one, not including the current round (exclusive).
+        return any_previous_time_exclusive(
+        function(prev_round) {
+          return overcome_with_exhaustion_after_round({athlete: athlete, round: prev_round})
+        }, current_round)
+    }
+
+    // Whether or not an athlete starts feeling really fired up after a round is actually pretty rare.
+    var started_feeling_really_fired_up_after_round = mem(function({athlete, round}) {
+      var likelihood_of_feeling_really_fired_up_after_round = 0.05;
+      return flip(likelihood_of_feeling_really_fired_up_after_round);
+    })
+
+    // Starting to feel really fired up is a temporally extended event that affects future rounds. We will define a helper function to check if they started to feel energized after any previous round.
+    var started_feeling_really_fired_up_after_any_previous_round = function({athlete, current_round}) {
+         // It says AFTER, so consider if they started feeling energized in any previous round after the current one, not including the current round (exclusive).
+        return any_previous_time_exclusive(
+        function(prev_round) {
+          return started_feeling_really_fired_up_after_round({athlete: athlete, round: prev_round})
+        }, current_round)
+    }
+
+    // Whether or not an athlete falls while skiing round occurs pretty rarely in general, and is specific to a particular round
+    var fell_while_skiing_in_round = mem(function({athlete, round}){
+      var likelihood_of_falling_in_round = 0.03;
+      return flip(likelihood_of_falling_in_round); 
+    })
+
+    // Whether or not an athlete burns their hand on a gun in a particular round is rare.
+    var burned_hand_on_gun_in_round = mem(function({athlete, round}) {
+        var likelihood_of_burning_hand_on_gun_in_round = 0.05;
+      return flip(likelihood_of_burning_hand_on_gun_in_round); 
+    })
+
+    // The sentence specifically says that burning ones hand on a gun doesnt necessarily impact the particular round, but it will certaintly impact future rounds. We will define a helper function to check if they started to burned their hand after any previous round.
+    var burned_hand_on_gun_in_any_previous_round = function({athlete, current_round}) {
+         // It says it did not affect the specific round, so consider if they started feeling energized in any previous round after the current one, not including the current round (exclusive).
+        return any_previous_time_exclusive(
+        function(prev_round) {
+          return burned_hand_on_gun_in_round({athlete: athlete, round: prev_round})
+        }, current_round)
+    }
+
+    // Whether or not an athlete injures their wrist before a round is quite rare.
+    var injured_wrist_before_round = mem(function({athlete, round}) {
+        var likelihood_of_injuring_wrist_before_round = 0.05;
+      return flip(likelihood_of_injuring_wrist_before_round); 
+    })
+
+    // Injuring a wrist is a temporally extended event that affects future rounds. We will define a helper function to check if they injured their wrist in any previous rounds.
+    var has_injured_wrist_in_any_previous_round = function({athlete, current_round}) {
+        // It says before, so use the inclusive function.
+        return any_previous_time_inclusive(
+        function(prev_round) {
+          return injured_wrist_before_round({athlete: athlete, round: prev_round})
+        }, current_round)
+    }
+
+    // An athlete's shooting accuracy varies from round to round. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. Athlete's shooting accuracy in any given round is also somewhat down to chance. Despite what the description says, intuitively, accuracy probably varies as a function of intrinsic strength, because strong athletes tend to be better shots and weaker athletes who are less experienced in biathalon tend to miss lots of the shots they take.
+    var accuracy_at_shooting_in_round = mem(function({athlete, round}) {
+      // Prior that an athlete shoots with poor, moderate, or high accuracy on a given round.
+     var parameter_low_accuracy_prior = 
+          intrinsic_strength(athlete) > 120 ? 0.05 : // Strong athletes rarely have very low accuracy.
+               intrinsic_strength(athlete) < 80 ?  0.8 : // Weak athletes often are very inaccurate
+                                                     0.2;  // Otherwise generally not extremely inaccurate
+      var parameter_moderate_accuracy_prior = intrinsic_strength(athlete) > 120 ? 0.15 : // Strong athletes also aren't moderately inaccruate
+               intrinsic_strength(athlete) < 80 ?  0.15 : // Weak athletes also aren't moderately inaccurate
+                                                        0.6; // Medium athletes are usually moderaltey accurate
+      var parameter_extra_high_accuracy_prior = intrinsic_strength(athlete) > 120 ? 0.8 :  // Strong athletes are often sharpshootesr
+               intrinsic_strength(athlete) < 80 ?  0.05 : // Weak athletes are hardly ever sharpshooters
+                                                        0.2; // Otherwise rarely are actually sharpshooters
+
+      // How accurate someone is on average if the are low, medium, or high accuracy.
+      var low_accuracy_average = 30; 
+      var moderate_accuracy_average = 60;
+      var extra_high_accuracy_average = 90;
+      var accuracy_variance = 10;
+      
+      // How accurate this player is on average, given their respective priors.
+      var this_player_accuracy_average = categorical({ps: [parameter_low_accuracy_prior, parameter_moderate_accuracy_prior, parameter_extra_high_accuracy_prior], 
+      vs: [low_accuracy_average, moderate_accuracy_average, extra_high_accuracy_average]});
+
+      var this_player_base_accuracy_in_round = Math.min(Math.max(gaussian(this_player_accuracy_average, accuracy_variance), 0), 100);
+
+      // Reduced if burned their hand on gun in any previous round.
+      var accuracy_adjusted_for_burned_hand = burned_hand_on_gun_in_any_previous_round({athlete: athlete, current_round : round}) ? this_player_base_accuracy_in_round * 0.5 : this_player_base_accuracy_in_round;
+
+      // Reduced if injured wrist before any previous round.
+      var accuracy_adjusted_for_injured_wrist = has_injured_wrist_in_any_previous_round({athlete: athlete, current_round : round}) ? accuracy_adjusted_for_burned_hand * 0.8 : accuracy_adjusted_for_burned_hand;
+
+      return accuracy_adjusted_for_injured_wrist;
+    })
+    
+    // The effective speed with which any given athlete skis in a particular round is determined by their intrinsic strength, but is (1) reduced if they were overcome by exhaustion in any previous round; (2) increased if they started feeling really fired up in any previous round; (3) reduced if they fell while skiing in the current round.
+    var effective_athlete_speed_in_round = mem(function({athlete, round}) {
+      // Assume their base speed is just their current strength.
+      var base_speed_in_round = intrinsic_strength({athlete : athlete});
+
+      //  Reduced if they were overcome by exhaustion in any previous round. Use the helper function to check if they felt tired after any previous round.
+      var strength_adjusted_for_exhaustion = overcome_with_exhaustion_after_any_previous_round({athlete: athlete, current_round : round}) ? base_speed_in_round * 0.7 : base_speed_in_round;
+
+      // Increased if started feeling really fired up in any previous round. Use the helper function to check if they felt fired up after any previous round.
+      var strength_adjusted_for_fired_up = started_feeling_really_fired_up_after_any_previous_round({athlete: athlete, current_round : round}) ? strength_adjusted_for_exhaustion * 1.3 : strength_adjusted_for_exhaustion;
+
+      // Reduced if they fell in the current round. We can directly check if they slipped in the current round.
+      var strength_adjusted_for_falling = fell_while_skiing_in_round({athlete: athlete, round: round}) ? strength_adjusted_for_fired_up * 0.8 : strength_adjusted_for_fired_up;
+
+      return strength_adjusted_for_falling; 
+    })
+
+    // A team's biathalon score in a round is the average speed of all of its team members, plus the average shooting accuracy in that particular round.
+    var team_biathalon_score_in_round = function({team, round}) {
+      var average_team_speed = mean(map(function(athlete) { return  effective_athlete_speed_in_round({athlete: athlete, round: round}) }, team));
+
+      var average_shooting_accuracy = mean(map(function(athlete) { return accuracy_at_shooting_in_round({athlete: athlete, round: round}) }, team));
+
+      return average_team_speed + average_shooting_accuracy;
+    }
+
+    // A biathalon team beats another if their team's score is higher in that round.
+    var beat = function({team1, team2, round}){
+      // Assert that the appropriate team wins
+      // Return true if team1 won
+      return team_biathalon_score_in_round({team: team1, round: round}) > team_biathalon_score_in_round({team: team2, round: round})
+    }
+    
+    // A biathalon team loses to another team if they did not beat that team in a given round.
+    var lost = function({team1, team2, round}){ 
+      return !beat({team1: team1, team2: team2, round: round})
+    }
+
+    // To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+    var who_would_win_by_how_much = function({team1, team2, round}) {
+      // 0% is Team 1 would defintiely win, 100% is Team 2 would definitely win, so we will just calculate the likelihood that team 2 would win here.
+      // Simulate random possible future rounds based on random round IDs, starting with the ID of the current round to avoid any rounds we've seen so far. We'll simulate out of 100 random rounds.
+      var num_future_rounds_to_simulate = 5;
+      
+      var random_future_match_ids = mapN(function(x) {return Math.round(uniform(round+1, 20))}, num_future_rounds_to_simulate);
+
+      // Calculate how many rounds that team 2 would have won, meaning that team 1 lost.
+      var simulated_rounds_won_by_team_2 = sum(map(
+            function(random_future_match_id) {
+              return lost({team1: team1, team2: team2, round: random_future_match_id})}, random_future_match_ids))
+
+      // Return the likelihood that team 2 won.
+      return simulated_rounds_won_by_team_2 / num_future_rounds_to_simulate;
+    }
+    
+    
+    // CONDITIONS
+    // In the first round, Billy and Emery beat Alice and Sam.
+    condition(beat({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 1}))
+    // In the second round, Billy and Drew beat Alice and Lou.
+   condition(beat({team1: ['billy', 'drew'], team2: ['alice', 'lou'], round: 2}))
+    // In the third round, Billy and Ness beat Alice and Casey.
+    condition(beat({team1: ['billy', 'ness'], team2: ['alice', 'casey'], round: 3}))
+    // In the fourth round, Billy and Emery lost to Alice and Sam.
+    condition(lost({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 4}))
+    // Ness was overcome by exhaustion after the round they played in.
+    condition(overcome_with_exhaustion_after_round({athlete: 'ness', round: 3}))
+    // Casey, on the other hand, started feeling really fired up after that round.
+    condition(started_feeling_really_fired_up_after_round({athlete: 'casey', round: 3}))
+    // In Drew's round, they did help win but wound up burning their hand on the gun in a way that will make them much less accurate at shooting in the future.
+    condition(burned_hand_on_gun_in_round({athlete: 'drew', round: 2}))
+    // Alice fell while skiing during the first round.
+    condition(fell_while_skiing_in_round({athlete: 'alice', round: 1}))
+    // Sam injured her wrist before the fourth round.
+    condition(injured_wrist_before_round({athlete: 'sam', round: 4}))
+    // Lou does not have a lot of athletic experience.
+    condition(not_a_lot_of_athletic_experience({athlete: 'lou'}))
+    // Billy is an award winning biathlete.
+    condition(is_award_winning_biathlete({athlete: 'billy'}))
+    
+    // QUERIES
+    // Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+    // Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+    // Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+    // Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+    // Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+    // Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+    // Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+    // Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+  
+    return {
+        query1: intrinsic_strength_rank({athlete: 'billy', out_of_n_athletes: 100}),
+        query2:  intrinsic_strength_rank({athlete: 'emery', out_of_n_athletes: 100}),
+        query3: intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100}),
+        query4: accuracy_at_shooting_in_round({athlete: 'billy', round: 4}), 
+        query5: accuracy_at_shooting_in_round({athlete: 'emery', round: 4}),
+        query6: accuracy_at_shooting_in_round({athlete: 'alice', round: 4}),
+        query7: who_would_win_by_how_much({team1: ['billy', 'emery'], team2: ['drew', 'casey'], round: 5}),
+        query8: who_would_win_by_how_much({team1: ['billy', 'alice'], team2: ['emery', 'sam'], round: 6})
+    }
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>

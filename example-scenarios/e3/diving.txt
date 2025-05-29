@@ -1,0 +1,322 @@
+<START_SCENARIO>
+BACKGROUND
+In this event, the athletes are competing in a series of synchronized diving tournaments. Each tournament consists of a series of rounds. In each round, athletes compete as part of a team. In a given round, each team receives a combined score based on the difficulty of the dive and the execution of the dive. Athletes compete either individually or as a team.
+All rounds take place on the same day.
+
+CONDITIONS
+In the first round, Jamie and Gale beat Sam and Jordan.
+In the second round, Jamie and Gale beat Blake and Avery.
+In the third round, Jamie beat Blake.
+In the fourth round, Cameron beat Dakota.
+In the fifth round, Jamie and Cameron lost to Blake and Avery.
+Avery tripped on the end of the board during the second round.
+Jamie injured their knee in the third round.
+Dakota has been feeling nauseous since before the tournament began.
+Avery began feeling newly determined after the last round going into the upcoming races.
+Dakota is an inexperienced diver.
+
+QUERIES
+Query 1: Out of 100 random athletes, where do you think Jamie ranks in terms of intrinsic skill?
+Query 2: On a percentage scale from 0 to 100% (where 0=extremely easy, 100=as difficult as possible), how difficult of a dive do you think the team Jamie was on in the third round attempted?
+Query 3: In a new round later this same day between Jamie and Gale (Team 1) and Sam and Alice (Team 2), who would win and by how much?
+Query 4: In a new round later this same day between Jamie (Team 1) and Avery (Team 2), who would win and by how much?
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+// In the first round, Jamie and Gale beat Sam and Jordan.
+    condition(beat({team1:['jamie', 'gale'], team2:['sam', 'jordan'], round: 1}))
+// In the second round, Jamie and Gale beat Blake and Avery.
+    condition(beat({team1:['jamie', 'gale'], team2:['blake', 'avery'], round: 2}))
+// In the third round, Jamie beat Blake.
+    condition(beat({team1:['jamie'], team2:['blake'], round: 3}))
+// In the fourth round, Cameron beat Dakota.
+    condition(beat({team1:['cameron'], team2:['dakota'], round: 4}))
+// In the fifth round, Jamie and Cameron lost to Blake and Avery.
+    condition(lost({team1:['jamie', 'cameron'], team2:['blake', 'avery'], round: 5}))
+// Avery tripped on the end of the board during the second round.
+    condition(tripped_on_end_of_board_during_round({athlete: 'avery', round : 2}))
+// Jamie injured their knee in the third round.
+    condition(injured_knee_in_round({athlete: 'jamie', round: 3}))
+// Dakota has been feeling nauseous since before the tournament began.
+    condition(feeling_nauseous_since_round({athlete: 'dakota', round: 0}))
+// Avery began feeling newly determined after the second round.
+    condition(began_feeling_newly_determined_after_round({athlete: 'avery', round: 5}))
+// Dakota is an inexperienced diver.
+    condition(inexperienced_diver{athlete: 'dakota'})
+
+// QUERIES
+// Query 1: Out of 100 random athletes, where do you think Jamie ranks in terms of intrinsic skill?
+    intrinsic_skill_rank({athlete: 'jamie', out_of_n_athletes: 100})
+// Query 2: On a percentage scale from 0 to 100% (where 0=extremely easy, 100=as difficult as possible), how difficult of a dive do you think the team Jamie was on in the third round attempted?
+    team_dive_difficulty_in_round({team: ['jamie', 'avery'], round: 3}),
+// Query 3: In a new round later this same day between Jamie and Gale (Team 1) and Sam and Alice (Team 2), who would win and by how much?
+    who_would_win_by_how_much({team1:['jamie', 'gale'], team2:['sam', 'alice'], round: 6})
+// Query 4: In a new round later this same day between Jamie (Team 1) and Avery (Team 2), who would win and by how much?
+    who_would_win_by_how_much({team1:['jamie'], team2:['avery'], round: 7})
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+<START_SCRATCHPAD>
+First, we can reason about the role that intrinsic skill plays in this scenario.
+Intrinsic skill is an attribute of a given athlete that varies widely from athlete to athlete. Let's imagine that players generally fall into unskilled, skilled, or particularly skilled buckets.
+An athlete's intrinsic skill ranking out of n other athletes is the number of other athletes we might expect them to be more skilled than out of N total random athletes.
+An athlete’s intrinsic skill determines the difficulty of dives that they can successfully complete.
+The overall dive difficulty attempted by any given team is determined by the least skilled athlete on the team.
+An 'inexperienced' diver usually has average or less intrinsic skill.
+
+How difficult of a dive a team takes on varies in any given round. Teams can differ in the difficulty they attempt on any given round. The same team may try different levels of difficulty on different rounds. The dives each team takes in a given round are chosen before the tournament begins and are therefore independent of the outcome of the previous round. We'll assume that teams that are more skilled on average tend to pick harder dives and teams that are less skilled tend to pick easier dives.
+
+Now, let's reason about the other events mentioned in the scenario, being careful to think about whether they are one time events or events that affect future rounds.
+
+Whether or not an athlete trips on the end of the board in a specific round occurs at a somewhat rare frequency for any given athlete and round. This is a one time event that only affects this specific round.
+
+Whether or not an athlete injures their knee in a specific round occurs at a very rare frequency for any given athlete and round. This is an event that affects future rounds after the round in which they were injured. We will need to think about whether an athlete has injured their knee in ANY previous rounds to understand its effects on the current round.
+
+Whether or not an athlete starts feeling nauseous since a specific round (including 'round 0', that is, a placeholder we will use to indicate before the tournament began) occurs at a pretty rare frequency for any given athlete and round. Again, this is an event that affects future rounds after the round in which they started feeling nauseous. We will need to think about whether an athlete felt nauseous in ANY previous round to understand its effects on the current round.
+
+Whether or not an athlete starts feeling newly determined after a given round is probably somewhat likely in general. This is an event that affects future rounds, because it determines whether they will also be feeling determined in rounds later on. We will need to think about whether they 'started' feeling determined in ANY previous round to understand its effects on the current round.
+
+Now we can put it all together to think about what an athlete does in any particular round.  
+ An athlete's execution in a given round of synchronized diving is determined at a base level by their intrinsic skill. Now, let's take into account the factors described, being careful to reason about events that took place in previous rounds and in this particular ound. Their execution is affected by (1) whether they tripped on the end of the board only in the specific round under discussion, which will incur a penalty on execution score; (2) whether they have injured their knee in any PREVIOUS round, which will negatively impact their execution; (3) whether they started feeling nauseous in any PREVIOUS round, which may negatively impact their execution a little bit, and (4) whether they feel 'newly determined' in any PREVIOUS round, which will make their execution much better in the current round. 
+
+Finally, let's think about how these athletes come together to produce the results of an entire team.
+A team’s execution score is based on the average effective execution of the athletes and how difficult the attempted dive was. If the athletes are highly skilled, but the dive is very difficult, they may not execute well. Conversely, if athletes are highly skilled but the dive is not very difficult, the team may get a high execution score.
+A team’s overall score is determined by the sum of the difficulty and execution scores. Difficulty and execution scores are weighted equally.
+A team beats another team in a round if their overall team score is greater than the other team's overall team score in that round.
+A team loses to another team in a given round if they did not beat the team in that round.
+To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+
+<START_CONCEPT_TRACE>
+- intrinsic_skill
+- intrinsic_skill_rank
+  - depends on: intrinsic_skill
+- inexperienced_diver
+  - depends on: intrinsic_skill
+- team_dive_difficulty_in_round
+  - depends on: intrinsic_skill
+
+- tripped_on_end_of_board_during_round
+
+- injured_knee_in_round
+
+- feeling_nauseous_since_round
+
+- began_feeling_newly_determined_after_round
+
+- execution_in_round
+  - depends on: intrinsic_skill,tripped_on_end_of_board_during_round, injured_knee_in_round, feeling_nauseous_since_round, began_feeling_newly_determined_after_round
+
+- team_execution_in_round
+  - depends on: execution_in_round, team_dive_difficulty_in_round
+
+- overall_team_score
+  - depends on: team_execution_in_round, team_dive_difficulty_in_round
+
+- beat 
+  - depends on: overall_team_score
+- lost
+  - depends on: beat 
+- who_would_win_by_how_much
+  - depends on: lost
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+
+<START_WEBPPL_MODEL>
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic skill is an attribute of a given athlete that varies widely from athlete to athlete. Let's imagine that players generally fall into unskilled, skilled, or particularly skilled buckets.
+    var intrinsic_skill = mem(function ({athlete}) {
+      var parameter_low_skill_prior = 0.33;
+      var parameter_average_prior = 0.33;
+      var parameter_high_skill_prior = 0.34;
+
+      // On an arbitrary scale centered around 100.
+      var low_skill_mean = 80; 
+      var average_skill_mean = 100;
+      var high_skill_mean = 140;
+      var parameter_intrinsic_skill_variance = 10;
+
+      var this_player_skill_average = categorical({ps: [parameter_low_skill_prior, parameter_average_prior, parameter_high_skill_prior], 
+      vs: [low_skill_mean, average_skill_mean, high_skill_mean]});
+
+      return Math.max(gaussian(this_player_skill_average ,  parameter_intrinsic_skill_variance), 0);
+    })
+
+    // An athlete's intrinsic skill ranking out of n other athletes is the number of other athletes we might expect them to be more skilled than out of N total random athletes.
+    var intrinsic_skill_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is more skilled than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_skill({athlete: athlete}) > intrinsic_skill({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // An 'inexperienced' diver usually has average or less intrinsic skill.
+    var inexperienced_diver = mem(function({athlete}){
+      var inexperienced_diver_threshold = 100;
+      return intrinsic_skill({athlete: athlete}) < inexperienced_diver_threshold;
+    })
+
+    // How difficult of a dive a team takes on varies in any given round. Teams can differ in the difficulty they attempt on any given round. The same team may try different levels of difficulty on different rounds. The dives each team takes in a given round are chosen before the tournament begins and are therefore independent of the outcome of the previous round. We'll assume that teams that are more skilled on average tend to pick harder dives and teams that are less skilled tend to pick easier dives.
+    var team_dive_difficulty_in_round = mem(function({team, round}) {
+      var average_team_skill_in_round = mean(map(function(athlete) { return intrinsic_skill({athlete: athlete}) }, team))
+
+      // Prior that a team picks an easy, medium, or difficult dive given their team's average skill.
+     var parameter_easy_dive_prior = 
+          average_team_skill_in_round > 120 ? 0.05 : // Good teams rarely pick very easy dives.
+               average_team_skill_in_round < 80 ?  0.8 : // Weak teams often  pick easy dives
+                                                     0.2;  // Otherwise generally avoid easiest dives.
+      var parameter_medium_dive_prior = average_team_skill_in_round > 120 ? 0.15 : // Good teams also rarely pick medium dives.
+               average_team_skill_in_round < 80 ?  0.15 : // Weak teams also don't pick medium dives.
+                                                        0.6; // Medium athletes usually pick medium dives.
+      var parameter_difficult_dive_prior = average_team_skill_in_round > 120 ? 0.8 :  //  Good teams often pick hard dives
+               average_team_skill_in_round < 80 ?  0.05 : // Weak teams rarely pick hard dives
+                                                        0.2; // Otherwise sometimes but somewhat rarely pick a hard dive
+
+      // How hard a dive is in general on a 0-100 scale.
+      var easy_dive_average = 30; 
+      var medium_dive_average = 60;
+      var difficult_dive_average = 90;
+      var difficulty_variance = 10;
+      
+      // How hard of a dive this team will pick on average, given their skill
+      var this_team_difficulty_average = categorical({ps: [parameter_easy_dive_prior, parameter_medium_dive_prior, parameter_difficult_dive_prior], 
+      vs: [easy_dive_average, medium_dive_average, difficult_dive_average]});
+
+      return Math.min(Math.max(gaussian(this_team_difficulty_average, difficulty_variance), 0), 100)
+    })
+    
+
+    // Whether or not an athlete trips on the end of the board in a specific round occurs at a somewhat rare frequency for any given athlete and round. This is a one time event that only affects this specific round.
+    var tripped_on_end_of_board_during_round = mem(function({athlete, round}) {
+      var likelihood_of_tripping_in_given_round = 0.05;
+      return flip(likelihood_of_tripping_in_given_round); 
+    })
+
+    // Whether or not an athlete injures their knee in a specific round occurs at a very rare frequency for any given athlete and round. This is an event that affects future rounds after the round in which they were injured. We will need to think about whether an athlete has injured their knee in ANY previous rounds to understand its effects on the current round.
+    var injured_knee_in_round = mem(function({athlete, round}) {
+      var likelihood_of_injuring_knee_in_given_round = 0.05;
+      return flip(likelihood_of_injuring_knee_in_given_round);
+    })
+  
+    // Whether or not an athlete starts feeling nauseous since a specific round (including 'round 0', that is, a placeholder we will use to indicate before the tournament began) occurs at a pretty rare frequency for any given athlete and round. Again, this is an event that affects future rounds after the round in which they started feeling nauseous. We will need to think about whether an athlete felt nauseous in ANY previous round to understand its effects on the current round.
+    var feeling_nauseous_since_round = mem(function({athlete, round}) {
+      var likelihood_of_feeling_nauseous_starting_in_given_round = 0.02;
+      return flip(likelihood_of_feeling_nauseous_starting_in_given_round); 
+    })
+
+    // Whether or not an athlete starts feeling newly determined after a given round is probably somewhat likely in general. This is an event that affects future rounds, because it determines whether they will also be feeling determined in rounds later on. We will need to think about whether they 'started' feeling determined in ANY previous round to understand its effects on the current round.
+    var began_feeling_newly_determined_after_round = mem(function({athlete, round}){
+      var likelihood_of_feeling_newly_determined_after_round = 0.4;
+      return flip(likelihood_of_feeling_newly_determined_after_round);
+    })
+
+    // An athlete's execution in a given round of synchronized diving is determined at a base level by their intrinsic skill. Now, let's take into account the factors described, being careful to reason about events that took place in previous rounds and in this particular ound. Their execution is affected by (1) whether they tripped on the end of the board only in the specific round under discussion, which will incur a penalty on execution score; (2) whether they have injured their knee in any PREVIOUS round, which will negatively impact their execution; (3) whether they started feeling nauseous in any PREVIOUS round, which may negatively impact their execution a little bit, and (4) whether they feel 'newly determined' in any PREVIOUS round, which will make their execution much better in the current round. 
+    var execution_in_round = mem(function({athlete, round}){
+      var base_execution_in_round = intrinsic_skill({athlete : athlete});
+
+      var execution_adjusted_for_tripping = tripped_on_end_of_board_during_round({athlete : athlete, round: round}) ? base_execution_in_round * 0.8 : base_execution_in_round ;
+
+      var execution_adjusted_for_injuring_knee_in_any_previous_round = any_previous_time_inclusive(
+        function(prev_round) {
+          return injured_knee_in_round({athlete: athlete, round: prev_round})
+        }, round) ? execution_adjusted_for_tripping * 0.75 : execution_adjusted_for_tripping;
+
+      var execution_adjusted_for_feeling_nauseous_in_any_previous_round = any_previous_time_inclusive(
+        function(prev_round) {
+          return feeling_nauseous_since_round({athlete: athlete, round: prev_round})
+        }, round) ? execution_adjusted_for_injuring_knee_in_any_previous_round * 0.85 : execution_adjusted_for_injuring_knee_in_any_previous_round;
+
+      var execution_adjusted_for_feeling_newly_determined_in_any_previous_round = any_previous_time_inclusive(
+        function(prev_round) {
+          return began_feeling_newly_determined_after_round({athlete: athlete, round: prev_round})
+        }, round) ? execution_adjusted_for_feeling_nauseous_in_any_previous_round * 1.5 : execution_adjusted_for_feeling_nauseous_in_any_previous_round;
+
+      // Final execution score is an integer on a 0-10 scale.
+      return  execution_adjusted_for_feeling_newly_determined_in_any_previous_round;
+    })
+    
+    // A team’s execution score is based on the average effective execution of the athletes and how difficult the attempted dive was. If the athletes are highly skilled, but the dive is very difficult, they may not execute well. Conversely, if athletes are highly skilled but the dive is not very difficult, the team may get a high execution score.
+    var team_execution_in_round = function({team, round}) {
+      var average_team_execution_in_round = mean(map(function(athlete) { return execution_in_round({athlete: athlete, round: round}) }, team))
+
+      // Now, we'll say that an execution score is the average team skill (the likelihood that they pull off a dive) * the base likelihood that anyone can pull off a dive, which we can think of as inversely related to its difficulty. 
+
+      return average_team_execution_in_round * (100 -  team_dive_difficulty_in_round({team, round}));
+    }
+
+    // A team’s overall score is determined by the sum of the difficulty and execution scores. Difficulty and execution scores are weighted equally. 
+    var overall_team_score = function({team, round}) {
+      return team_execution_in_round({team: team, round: round}) + team_dive_difficulty_in_round({team: team, round: round})
+    }
+
+    // A team beats another team in a round if their overall team score is greater than the other team's overall team score in that round. 
+    var beat = function({team1, team2, round}){
+      // Assert that the appropriate team wins
+      // Return true if team1 won
+      return overall_team_score({team: team1, round: round} ) > overall_team_score({team: team2, round: round})
+    }
+    
+    // A team loses to another team in a given round if they did not beat the team in that round.
+    var lost = function({team1, team2, round}){ 
+      return !beat({team1: team1, team2: team2, round: round})
+    }
+
+    // To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+    var who_would_win_by_how_much = function({team1, team2, round}) {
+      // 0% is Team 1 would defintiely win, 100% is Team 2 would definitely win, so we will just calculate the likelihood that team 2 would win here.
+      // Simulate random possible future rounds based on random round IDs, starting with the ID of the current round to avoid any rounds we've seen so far. We'll simulate out of 100 random rounds.
+      var num_future_rounds_to_simulate = 5;
+      
+      var random_future_round_ids = mapN(function(x) {return Math.round(uniform(round+1, 20))}, num_future_rounds_to_simulate);
+
+      // Calculate how many rounds that team 2 would have won, meaning that team 1 lost.
+      var simulated_rounds_won_by_team_2 = sum(map(
+            function(random_future_round_id) {
+              return lost({team1: team1, team2: team2, round: random_future_round_id})}, random_future_round_ids))
+
+      // Return the likelihood that team 2 won.
+      return simulated_rounds_won_by_team_2 / num_future_rounds_to_simulate;
+    }
+
+  // CONDITIONS
+  // In the first round, Jamie and Gale beat Sam and Jordan.
+  condition(beat({team1:['jamie', 'gale'], team2:['sam', 'jordan'], round: 1}))
+  // In the second round, Jamie and Gale beat Blake and Avery.
+  condition(beat({team1:['jamie', 'gale'], team2:['blake', 'avery'], round: 2}))
+  // In the third round, Jamie beat Blake.
+  condition(beat({team1:['jamie'], team2:['blake'], round: 3}))
+  // In the fourth round, Cameron beat Dakota.
+  condition(beat({team1:['cameron'], team2:['dakota'], round: 4}))
+  // In the fifth round, Jamie and Cameron lost to Blake and Avery.
+  condition(lost({team1:['jamie', 'cameron'], team2:['blake', 'avery'], round: 4}))
+  // Avery tripped on the end of the board during the second round.
+  condition(tripped_on_end_of_board_during_round({athlete: 'avery', round : 2}))
+  // Jamie injured their knee in the third round.
+  condition(injured_knee_in_round({athlete: 'jamie', round: 3}))
+  // Dakota has been feeling nauseous since before the tournament began.
+  condition(feeling_nauseous_since_round({athlete: 'dakota', round: 0}))
+  // Avery began feeling newly determined after the second round.
+  condition(began_feeling_newly_determined_after_round({athlete: 'avery', round: 2}))
+  // Dakota is an inexperienced diver.
+  condition(inexperienced_diver({athlete: 'dakota'}))
+
+  // QUERIES
+  // Query 1: Out of 100 random athletes, where do you think Jamie ranks in terms of intrinsic skill?
+  // Query 2: On a percentage scale from 0 to 100% (where 0=extremely easy, 100=as difficult as possible), how difficult of a dive do you think the team Jamie was on in the third round attempted?
+  // Query 3: In a new round later this same day between Jamie and Gale (Team 1) and Sam and Alice (Team 2), who would win and by how much?
+  //  Query 4: In a new round later this same day between Jamie (Team 1) and Avery (Team 2), who would win and by how much?
+  return {
+    query1: intrinsic_skill_rank({athlete: 'jamie', out_of_n_athletes: 100}),
+    query2: team_dive_difficulty_in_round({team: ['jamie', 'avery'], round: 3}),
+    query3: who_would_win_by_how_much({team1:['jamie', 'gale'], team2:['sam', 'alice'], round: 6}),
+    query4: who_would_win_by_how_much({team1:['jamie'], team2:['avery'], round: 7})
+  }
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>
