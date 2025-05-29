@@ -1,0 +1,15 @@
+You will be asked to write code to model and answer different questions, using WebPPL.
+Below are some examples of models for other scenarios in WebPPL. Notice how the models are formatted.
+<SHUFFLED EXAMPLES OF SCENARIOS AND START_LANGUAGE_TO_WEBPPL_CODE DELIMITED BLOCK INJECTED HERE>
+Now, let's consider a new example. Translate the conditions and query into WebPPL code, following the examples provided. If there are two statements joined together, write this as a single line condition (e.g., using && as appropriate). 
+
+Reflect on what each sentence means and make sure the translation captures that knowledge.
+
+Be sure to copy each sentence from the conditions directly into the code as a comment. 
+The comments should have the exact text of each sentence, followed by a single condition. 
+There is no need to write other WebPPL definitions -- just translate each sentence.
+The broader WebPPL model will be written separately, at another time.
+
+Follow the prompts and start your response with <START_LANGUAGE_TO_WEBPPL_CODE> and end with <END_LANGUAGE_TO_WEBPPL_CODE>.
+
+<SCENARIO_INJECTED_HERE>

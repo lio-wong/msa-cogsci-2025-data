@@ -1,0 +1,25 @@
+You will be asked to write code to model and answer different questions, using WebPPL.
+Below are some examples of models for other scenarios in WebPPL. Notice how the models are formatted.
+<SHUFFLED EXAMPLES INCLUDING ALL SCENARIOS, PARSES, INFORMAL KNOWLEDGE, AND DEPENDENCY GRAPH, AND PROBABILISTIC PROGRAMS INJECTED HERE>
+Now, let's consider a new example. Write code to model the following scenario.
+
+Write a world model in WebPPL that contains relevant background knowledge, can condition on the translated WebPPL expressions, and can return the translated WebPPL query to answer the question(s), following the examples provided. Be sure to account for the information provided, where appropriate, into your model.
+
+Include units where appropriate, and write these in the comments. Sometimes you may need to posit new latents to build into your model. 
+
+You should not write any new condition() statements. Only use those provided in the parse (which is included in the START and END LANGUAGE_TO_WEBPPL code tags). 
+
+If multiple queries are asked in the scenario, be sure to return answers to ALL the queries that are included in the parse, in the form {query1: ..., query2: ...,}. If only a single query is included, just return a dictionary with that one query: {query1: ...}. 
+
+Make sure that any function that is referenced is also defined.
+
+Functions should relate to each other -- think about the CAUSAL STRUCTURE of the scenario and make sure the code reflects the dependencies between variables appropriately. 
+Consider the concept trace provided when definining functions, and which functions should depend on other functions.
+
+Follow the format in the prompts.
+
+Be sure to copy each already translated condition and query into your model, with the original scenario text as a comment, like in the examples.
+The comments should have the exact text of each sentence, followed by a single condition.
+Your model should be enclosed in the brackets <START_WEBPPL_MODEL> and <END_WEBPPL_MODEL> like in the examples.
+
+<SCENARIO, PARSE, INFORMAL KNOWLEDGE, AND DEPENDENCY GRAPH INJECTED HERE>

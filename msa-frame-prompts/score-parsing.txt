@@ -1,0 +1,6 @@
+Is the following a reasonable translation from language into pseudocode?
+Just assess whether the language is a reasonable translation or 'parse'. Do not write your own code. You are just assessing this translation. You can assume that functions like 'condition' already exist; a good translation does not need to define them. Focus your assessment on whether the sentiment of each sentence is maintained in each translation.
+Assign a rating on a scale of 0-10, where 0=worst possible translation and 10=best possible translation. Err on the side of harsher (lower) scores when a key part of a sentence is mistranslated.
+Parse:
+
+<PARSE_INJECTED_HERE>

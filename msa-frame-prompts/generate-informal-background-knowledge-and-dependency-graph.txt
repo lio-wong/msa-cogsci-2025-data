@@ -1,0 +1,17 @@
+You will be asked to write code to model and answer different questions, using WebPPL.
+Below are some examples of models for other scenarios in WebPPL. Notice how the models are formatted.
+<SHUFFLED EXAMPLES UP TO DEPENDENCY GRAPH INJECTED HERE>
+Now, let's consider a new example. Write a natural language description of the causal structure of the underlying model. 
+
+Make sure to describe the structure of the world that would allow you to reason about the scenario provided. Make sure to RELATE ALL RELEVANT INFORMATION in the scenario in your description.
+
+The code will later, separately, be written - based on your natural language description. You can consider the translated sentences for what may be relevant to incorporate.
+
+The natural language should describe the general, causal model of the situation and what factors matter. Draw on your prior common sense knowledge about the world to write this description, and make sure to include any frequencies, probabilities, and units for causal factors you mention.
+
+After you write your natural language description, use the description and scenario to extract out a list of concepts that your description implies. Include any dependencies between the concepts, and make sure to sort the concepts so that named concepts appear before any that depend on them. This should be enclosed in <START_CONCEPT_TRACE> and <END_CONCEPT_TRACE>.
+
+Follow the prompts and start your response with <START_SCRATCHPAD> and end with <END_SCRATCHPAD>.
+
+Here is the scenario, as well as a parse of the scenario conditions and questions. Functions called in the parse MUST appear in the concept trace!
+<SCENARIO_AND_PARSE_INJECTED_HERE>
