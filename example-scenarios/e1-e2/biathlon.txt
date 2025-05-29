@@ -1,0 +1,234 @@
+<START_SCENARIO>
+BACKGROUND
+In this event, teams of players are competing in rounds of a biathalon, a winter sport that combines cross-country skiing rounds and rifle shooting. In each round, the team that wins depends on the average speed with which the athletes are able to ski, based on their intrinsic strength, as well as each team member's shooting accuracy in that particular round.
+Athletes compete either individually or as a team.
+All matches take place on the same day.
+
+CONDITIONS
+In the first round, Billy and Emery beat Alice and Sam.
+In the second round, Billy and Drew beat Alice and Lou.
+In the third round, Billy and Ness beat Alice and Casey.
+In the fourth round, Billy and Emery lost to Alice and Sam.
+
+QUERIES
+Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+In the first round, Billy and Emery beat Alice and Sam.
+  condition(beat({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 1}))
+In the second round, Billy and Drew beat Alice and Lou.
+  condition(beat({team1: ['billy', 'drew'], team2: ['alice', 'lou'], round: 2}))
+In the third round, Billy and Ness beat Alice and Casey.
+  condition(beat({team1: ['billy', 'ness'], team2: ['alice', 'casey'], round: 3}))
+In the fourth round, Billy and Emery lost to Alice and Sam.
+  condition(lost({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 4}))
+
+// QUERIES
+Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'billy', out_of_n_athletes: 100})
+Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'emery', out_of_n_athletes: 100})
+Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+  intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100})
+Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+   accuracy_at_shooting_in_round({athlete: 'billy', round: 4}) 
+Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+  accuracy_at_shooting_in_round({athlete: 'emery', round: 4}) 
+Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+  accuracy_at_shooting_in_round({athlete: 'alice', round: 4}) 
+Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+  who_would_win_by_how_much({team1: ['billy', 'emery'], team2: ['drew', 'casey'], round: 5})
+Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+  who_would_win_by_how_much({team1: ['billy', 'alice'], team2: ['emery', 'sam'], round: 6})
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+<START_SCRATCHPAD>
+Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+
+An athlete's shooting accuracy varies from round to round. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. Athlete's shooting accuracy in any given round is also somewhat down to chance. Despite what the description says, intuitively, accuracy probably varies as a function of intrinsic strength, because strong athletes tend to be better shots and weaker athletes who are less experienced in biathalon tend to miss lots of the shots they take.
+
+Athletes are scored based on how fast they ski and how accurately they shoot. An athlete’s ability to ski is based on their intrinsic strength. Ski performance and shooting accuracy are weighted equally. Athletes receive more points for skiing faster and more points for achieving a high shooting accuracy.
+
+An athlete's speed in a given round is some noisy transformation on top of their strength.
+
+A team's biathalon score in a round is the average speed of all of its team members, plus the average shooting accuracy in that particular round.
+
+The amount that one team wins over another team is given by the difference in their biathalon speeds. 
+
+A biathalon team beats another if their team's score is higher in that round.
+
+A biathalon team loses to another team if they did not beat that team in a given round.
+
+<START_CONCEPT_TRACE>
+- intrinsic_strength
+- intrinsic_strength_rank
+  - depends on: intrinsic_strength
+
+- accuracy_at_shooting_in_round
+  - depends on: intrinsic_strength
+
+- athlete_speed_in_round
+  - depends on: intrinsic_strength
+
+- team_biathalon_score_in_round
+  - depends on: athlete_speed_in_round, accuracy_at_shooting_in_round
+- beat 
+  - depends on: team_biathalon_score_in_round
+- lost
+  - depends on: beat
+- who_would_win_by_how_much
+  - depends on: lost
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+<START_WEBPPL_MODEL>
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+    var intrinsic_strength = mem(function ({athlete}) {
+      // We'll imagine that players tend to be weak, average, or strong, and uniformly around that.
+      var parameter_weak_prior = 0.33;
+      var parameter_average_prior = 0.33;
+      var parameter_strong_prior = 0.34;
+
+      // On an arbitrary scale centered around 100.
+      var weak_mean = 80; 
+      var average_mean = 100;
+      var strong_mean = 140;
+      var parameter_intrinsic_strength_variance = 10;
+
+      var parameter_intrinsic_strength_average = categorical({ps: [parameter_weak_prior, parameter_average_prior, parameter_strong_prior], 
+      vs: [weak_mean, average_mean, strong_mean]});
+
+      return Math.max(gaussian(parameter_intrinsic_strength_average ,  parameter_intrinsic_strength_variance), 0);
+    })
+
+   // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // An athlete's shooting accuracy varies from round to round. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. Athlete's shooting accuracy in any given round is also somewhat down to chance. Despite what the description says, intuitively, accuracy probably varies as a function of intrinsic strength, because strong athletes tend to be better shots and weaker athletes who are less experienced in biathalon tend to miss lots of the shots they take.
+    var accuracy_at_shooting_in_round = mem(function({athlete, round}) {
+      // Prior that an athlete shoots with poor, moderate, or high accuracy on a given round.
+     var parameter_low_accuracy_prior = 
+          intrinsic_strength(athlete) > 120 ? 0.05 : // Strong athletes rarely have very low accuracy.
+               intrinsic_strength(athlete) < 80 ?  0.8 : // Weak athletes often are very inaccurate
+                                                     0.2;  // Otherwise generally not extremely inaccurate
+      var parameter_moderate_accuracy_prior = intrinsic_strength(athlete) > 120 ? 0.15 : // Strong athletes also aren't moderately inaccruate
+               intrinsic_strength(athlete) < 80 ?  0.15 : // Weak athletes also aren't moderately inaccurate
+                                                        0.6; // Medium athletes are usually moderaltey accurate
+      var parameter_extra_high_accuracy_prior = intrinsic_strength(athlete) > 120 ? 0.8 :  // Strong athletes are often sharpshootesr
+               intrinsic_strength(athlete) < 80 ?  0.05 : // Weak athletes are hardly ever sharpshooters
+                                                        0.2; // Otherwise rarely are actually sharpshooters
+
+      // How accurate someone is on average if the are low, medium, or high accuracy.
+      var low_accuracy_average = 30; 
+      var moderate_accuracy_average = 60;
+      var extra_high_accuracy_average = 90;
+      var accuracy_variance = 10;
+      
+      // How accurate this player is on average, given their respective priors.
+      var this_player_accuracy_average = categorical({ps: [parameter_low_accuracy_prior, parameter_moderate_accuracy_prior, parameter_extra_high_accuracy_prior], 
+      vs: [low_accuracy_average, moderate_accuracy_average, extra_high_accuracy_average]});
+
+      return Math.min(Math.max(gaussian(this_player_accuracy_average, accuracy_variance), 0), 100)
+    })
+
+    // An athlete's speed in a given round is some transformation on top of their strength.
+    var athlete_speed_in_round = mem(function({athlete, round}) {
+      // Assume their speed in a given round is some constant but noisy transformation of their underlying strength. We don't know the distance of the course, so we won't include that as a constant.
+      return intrinsic_strength({athlete : athlete});
+    })
+
+    
+    // A team's biathalon score in a round is the average speed of all of its team members, plus the average shooting accuracy in that particular round.
+    var team_biathalon_score_in_round = function({team, round}) {
+      var average_team_speed = mean(map(function(athlete) { return athlete_speed_in_round({athlete: athlete, round: round}) }, team));
+
+      var average_shooting_accuracy = mean(map(function(athlete) { return accuracy_at_shooting_in_round({athlete: athlete, round: round}) }, team));
+
+      return average_team_speed + average_shooting_accuracy;
+    }
+
+    // A biathalon team beats another if their team's score is higher in that round.
+    var beat = function({team1, team2, round}){
+      // Assert that the appropriate team wins
+      // Return true if team1 won
+      return team_biathalon_score_in_round({team: team1, round: round}) > team_biathalon_score_in_round({team: team2, round: round})
+    }
+    
+    // A biathalon team loses to another team if they did not beat that team in a given round.
+    var lost = function({team1, team2, round}){ 
+      return !beat({team1: team1, team2: team2, round: round})
+    }
+
+    // To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+    var who_would_win_by_how_much = function({team1, team2, round}) {
+      // 0% is Team 1 would defintiely win, 100% is Team 2 would definitely win, so we will just calculate the likelihood that team 2 would win here.
+      // Simulate random possible future rounds based on random round IDs, starting with the ID of the current round to avoid any rounds we've seen so far. We'll simulate out of 100 random rounds.
+      var num_future_rounds_to_simulate = 100;
+      var random_future_round_ids = mapN(function(x) {return uniform(round+1, 1000)}, num_future_rounds_to_simulate);
+
+      // Calculate how many rounds that team 2 would have won, meaning that team 1 lost.
+      var simulated_rounds_won_by_team_2 = sum(map(
+            function(random_future_round_id) {
+              return lost({team1: team1, team2: team2, round: random_future_round_id})}, random_future_round_ids))
+
+      // Return the likelihood that team 2 won.
+      return simulated_rounds_won_by_team_2 / num_future_rounds_to_simulate;
+    }
+    
+    
+    // CONDITIONS
+    // In the first round, Billy and Emery beat Alice and Sam.
+    condition(beat({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 1}))
+    // In the second round, Billy and Drew beat Alice and Lou.
+    condition(beat({team1: ['billy', 'drew'], team2: ['alice', 'lou'], round: 2}))
+    // In the third round, Billy and Ness beat Alice and Casey.
+    condition(beat({team1: ['billy', 'ness'], team2: ['alice', 'casey'], round: 3}))
+    // In the fourth round, Billy and Emery lost to Alice and Sam.
+    condition(lost({team1: ['billy', 'emery'], team2: ['alice', 'sam'], round: 4}))
+    
+    // QUERIES
+    // Query 1: Out of 100 random athletes, where do you think Billy ranks in terms of intrinsic strength?
+    // Query 2: Out of 100 random athletes, where do you think Emery ranks in terms of intrinsic strength?
+    // Query 3: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+    // Query 4: On a percentage scale from 0 to 100%, how accurate do you think Billy was at shooting in the fourth round?
+    // Query 5: On a percentage scale from 0 to 100%, how accurate do you think Emery was at shooting in the fourth round?
+    // Query 6: On a percentage scale from 0 to 100%, how accurate do you think Alice was at shooting in the fourth round?
+    // Query 7: In a new round later this same day between Billy and Emery (Team 1) and Drew and Casey (Team 2), who would win and by how much?
+    // Query 8: In a new round later this same day between Billy and Alice (Team 1) and Emery and Sam (Team 2), who would win and by how much?
+    return {
+        query1: intrinsic_strength_rank({athlete: 'billy', out_of_n_athletes: 100}),
+        query2: intrinsic_strength_rank({athlete: 'emery', out_of_n_athletes: 100}),
+        query3: intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100}),
+        query4: accuracy_at_shooting_in_round({athlete: 'billy', round: 4}),
+        query5: accuracy_at_shooting_in_round({athlete: 'emery', round: 4}),
+        query6: accuracy_at_shooting_in_round({athlete: 'alice', round: 4}),
+        query7: who_would_win_by_how_much({team1: ['billy', 'emery'], team2: ['drew', 'casey'], round: 5}),
+        query8: who_would_win_by_how_much({team1: ['billy', 'alice'], team2: ['emery', 'sam'], round: 6})
+    }
+
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>

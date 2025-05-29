@@ -1,0 +1,198 @@
+<START_SCENARIO>
+BACKGROUND
+In this event, the athletes are competing in a series of canoe races. In each race, the team that wins depends on the average speed with which the athletes are able to row, based on their intrinsic strength modulated by other factors including how much effort they put in to that race.
+Athletes compete either individually or as a team.
+All races take place on the same day.
+
+CONDITIONS
+In the first race, Alice beat Casey.
+In the second race, Alice and Ness beat Casey and Max.
+In the third race, Max and Alice lost to Casey and Ness.
+
+QUERIES
+Query 1: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+Query 2: On a percentage scale from 0 to 100%, how much effort do you think Max put into the third race?
+Query 3: In a new race later this same day between Alice and Ness (Team 1) and Max and Taylor (Team 2), who would win and by how much?
+Query 4: In a new race later this same day between Max and Casey (Team 1) and Ness and Willow (Team 2), who would win and by how much?
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+In the first race, Alice beat Casey.
+  condition(beat({team1: ['alice'], team2: ['casey'], race: 1}))
+In the second race, Alice and Ness beat Casey and Max.
+  condition(beat({team1: ['alice', 'ness'], team2: ['casey', 'max'], race: 2}))
+In the third race, Max and Alice lost to Casey and Ness.
+  condition(lost({team1: ['max', 'alice'], team2: ['casey', 'ness'], race: 3}))
+
+// QUERIES
+Query 1: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+   intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100})
+Query 2: On a percentage scale from 0 to 100%, how much effort do you think Max put into the third race?
+   effort_level_in_race({athlete: 'max', race: 3})
+Query 3: In a new race later this same day between Alice and Ness (Team 1) and Max and Taylor (Team 2), who would win and by how much?
+   who_would_win_by_how_much({team1: ['alice', 'ness'], team2: ['max', 'taylor'], race: 4})
+Query 4: In a new race later this same day between Max and Casey (Team 1) and Ness and Willow (Team 2), who would win and by how much?
+  who_would_win_by_how_much({team1: ['max', 'casey'], team2: ['ness', 'willow'], race: 5})
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+<START_SCRATCHPAD>
+First, let's reason about the role of strength in this scenario.
+Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+
+An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+
+Athletes also vary in the effort that they put into any given race. Athletes can put in either moderate amount of effort, little effort, or extra high amounts of effort. Which of these they are more likely to do probably depends on their underlying strength, as stronger athletes are probably more likely to put in extra high effort, and weaker athletes probably tend to be more likely to put in lower amounts of effort.
+
+An athlete's effective rowing speed in a given race is determined at a base level by their intrinsic strength, since stronger athletes row faster. However, we need to carefully take into account all of the factors described. Their effective speed in a given race is affected by their effort level, which is effectively a percentage multiplier on their speed in this race. 
+
+A team's rowing speed in a race is described in the background as the AVERAGE effective speed with which the athletes are able to row on that team.
+
+The amount that one team wins over another team is given by the difference in their rowing speeds. 
+
+A canoe team beats another if their team's rowing speed is faster in that race, assuming a fixed race length.
+
+A canoe team loses to another team if they did not beat that team in a given race.
+
+
+<START_CONCEPT_TRACE>
+- intrinsic_strength
+- intrinsic_strength_rank
+  - depends on: intrinsic_strength
+
+- effort_level_in_race
+  - depends on: intrinsic_strength
+
+- effective_rowing_speed_in_race
+  - depends on: intrinsic_strength, effort_level_in_race
+
+- team_rowing_speed_in_race
+  - depends on: effective_rowing_speed_in_race
+
+- beat 
+  - depends on: team_rowing_speed_in_race
+- lost
+  - depends on: beat
+- who_would_win_by_how_much
+  - depends on: lost
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+<START_WEBPPL_MODEL>
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic strength is an underlying attribute of a given athlete that varies somewhat widely from athlete to athlete.
+    var intrinsic_strength = mem(function ({athlete}) {
+      // Arbitrary measure of strength, variance is somewhat wide.
+      var parameter_intrinsic_strength_average = 100;
+      var parameter_intrinsic_strength_variance = 20;
+      return Math.max(gaussian(parameter_intrinsic_strength_average, parameter_intrinsic_strength_variance), 0)
+    })
+
+    // An athlete's intrinsic strength ranking out of n other athletes is the number of other athletes we might expect them to be stronger than out of N total random athletes.
+    var intrinsic_strength_rank = function({athlete, out_of_n_athletes}) {
+        // Generate out_of_n_athletes - 1 other random athlete IDs
+        var random_athlete_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_athletes - 1)
+        
+        // Total number of random other athletes this athlete is stronger than.
+        return sum(map(
+            function(random_athlete_id) {
+              return intrinsic_strength({athlete: athlete}) > intrinsic_strength({athlete: random_athlete_id})}, random_athlete_ids))
+    }
+
+    // Athletes also vary in the effort that they put into any given race. Athletes can put in either moderate amount of effort, little effort, or extra high amounts of effort. Which of these they are more likely to do probably depends on their underlying strength, as stronger athletes are probably more likely to put in extra high effort, and weaker athletes probably tend to be more likely to put in lower amounts of effort.
+    var effort_level_in_race = mem(function({athlete, race}) {
+      // Prior that an athlete is low, moderately high, or extra high effort on a given round.
+      var parameter_low_effort_prior = 
+          intrinsic_strength(athlete) > 140 ? 0.05 : // Strong athletes rarely put in little effort 
+               intrinsic_strength(athlete) < 90 ?  0.8 : // Weak athletes often put in little effort
+                                                     0.2;  // Otherwise generally don't put in little effort
+      var parameter_moderate_effort_prior = intrinsic_strength(athlete) > 140 ? 0.15 : // Strong athletes also don't generally put in moderate effort
+               intrinsic_strength(athlete) < 90 ?  0.15 : // Weak athletes also don't often put in moderate effort
+                                                        0.6; // Medium athletes often do put in moderate effort
+      var parameter_extra_high_effort_prior = intrinsic_strength(athlete) > 140 ? 0.8 :  // Strong athletes often put in a lot of effort
+               intrinsic_strength(athlete) < 90 ?  0.05 : // Weak athletes rarely put in extra high effort
+                                                        0.2; // Otherwise generally don't put in extra high effort
+
+      // How much someone pulls on average if they are pulling with low, moderately high, or extra high effort.
+      var low_effort_average = 40; 
+      var moderate_effort_average = 60;
+      var extra_high_effort_average = 80;
+      var effort_variance = 10;
+      
+     
+      var effort_average = categorical({ps: [parameter_low_effort_prior, parameter_moderate_effort_prior, parameter_extra_high_effort_prior], 
+      vs: [low_effort_average, moderate_effort_average, extra_high_effort_average]});
+
+      return Math.min(Math.max(gaussian(effort_average, effort_variance), 0), 100)
+    })
+
+    // An athlete's effective rowing speed in a given race is determined at a base level by their intrinsic strength, since stronger athletes row faster. However, we need to carefully take into account all of the factors described. Their effective speed in a given race is affected by their effort level, which is effectively a percentage multiplier on their speed in this race. 
+    var effective_rowing_speed_in_race = mem(function({athlete, race}) {
+      var base_rowing_speed_in_race = intrinsic_strength({athlete : athlete})
+
+      var average_effort = 50;
+
+      var rowing_speed_adjusted_for_effort_level_in_this_race = (effort_level_in_race({athlete: athlete, race: race}) / average_effort) * base_rowing_speed_in_race;
+
+      return rowing_speed_adjusted_for_effort_level_in_this_race;
+    })
+    
+    // A team's rowing speed in a race is described in the background as the AVERAGE effective speed with which the athletes are able to row on that team.
+    var team_rowing_speed_in_race = function({team, race}) {
+      return mean(map(function(athlete) { return effective_rowing_speed_in_race({athlete: athlete, race: race}) }, team))
+    }
+    
+    // A canoe team beats another if their team's rowing speed is faster in that race, assuming a fixed race length.
+    var beat = function({team1, team2, race}){
+      // Assert that the appropriate team wins
+      // Return true if team1 won
+      return team_rowing_speed_in_race({team: team1, race: race}) > team_rowing_speed_in_race ({team: team2, race: race})
+    }
+    
+    // A canoe team loses to another team if they did not beat that team in a given race.
+    var lost = function({team1, team2, race}){ 
+      return !beat({team1: team1, team2: team2, race: race})
+    }
+
+    // To calculate who would win and by how much, we will calculate the likelihood that a team would win over another. 
+    var who_would_win_by_how_much = function({team1, team2, race}) {
+      // 0% is Team 1 would defintiely win, 100% is Team 2 would definitely win, so we will just calculate the likelihood that team 2 would win here.
+      // Simulate random possible future races based on random race IDs, starting with the ID of the current race to avoid any races we've seen so far. We'll simulate out of 100 random races.
+      var num_future_races_to_simulate = 100;
+      var random_future_race_ids = mapN(function(x) {return uniform(race+1, 1000)}, num_future_races_to_simulate);
+
+      // Calculate how many races that team 2 would have won, meaning that team 1 lost.
+      var simulated_races_won_by_team_2 = sum(map(
+            function(random_future_race_id) {
+              return lost({team1: team1, team2: team2, race: random_future_race_id})}, random_future_race_ids))
+
+      // Return the likelihood that team 2 won.
+      return simulated_races_won_by_team_2 / num_future_races_to_simulate;
+    }
+    
+    // CONDITIONS
+    // In the first race, Alice beat Casey.
+    condition(beat({team1: ['alice'], team2: ['casey'], race: 1}))
+    // In the second race, Alice and Ness beat Casey and Max.
+    condition(beat({team1: ['alice', 'ness'], team2: ['casey', 'max'], race: 2}))
+    // In the third race, Max and Alice lost to Casey and Ness.
+    condition(lost({team1: ['max', 'alice'], team2: ['casey', 'ness'], race: 3}))
+    
+    // QUERIES
+    // Query 1: Out of 100 random athletes, where do you think Alice ranks in terms of intrinsic strength?
+    // Query 2: On a percentage scale from 0 to 100%, how much effort do you think Max put into the third race?
+    // Query 3: n a new race later this same day between Alice and Ness (Team 1) and Max and Taylor (Team 2), who would win and by how much?
+    // Query 4: In a new race later this same day between Max and Casey (Team 1) and Ness and Willow (Team 2), who would win and by how much?
+    return {
+        query1: intrinsic_strength_rank({athlete: 'alice', out_of_n_athletes: 100})
+        query2: effort_level_in_race({athlete: 'max', race: 3}),
+        query3: who_would_win_by_how_much({team1: ['alice', 'ness'], team2: ['max', 'taylor'], race: 4}),
+        query4: who_would_win_by_how_much({team1: ['max', 'casey'], team2: ['ness', 'willow'], race: 5})
+    }
+
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>

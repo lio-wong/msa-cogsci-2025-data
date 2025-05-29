@@ -1,0 +1,214 @@
+<START_SCENARIO>
+BACKGROUND
+In this model, students are being evaluated for their science class, which has a two part exam that combines their performance on a written exam and a laboratory portion. These exams are completed in pairs, so sets of students collectively take evaluations.
+
+On each evaluation, the students will first take a written exam, which tests their intrinsic memorization abilities, and then are evaluated on a live laboratory portion. The live laboratory portion is notoriously finicky and performance is somewhat up to chance. 
+
+Their scores are based on the percentage of written exam questions they get correctly and how well they do on any given lab. Note that their intrinsic memorization abilities remain constant throughout all of their exams -- they neither get better nor worse at memorization across rounds.
+
+Any pair of student's overall performance on any given evaluation is determined by the combined scores for each student on both the written and laboratory portion. The written and lab portions are weighted equally. 
+
+CONDITIONS
+In the first evaluation, Barbara and Ajax passed.
+In the second evaluation, Barbara and Lou failed.
+In the third evaluation, Barbara and Casey passed.
+In the fourth evaluation, Lou and Casey passed.
+
+QUERIES
+Query 1: Out of 100 random students, where do you think Barbara ranks in terms of intrinsic memorization ability? 
+Query 2: Out of 100 random students, where do you think Lou ranks in terms of intrinsic memorization ability?
+Query 3: Out of 100 random students, where do you think Casey ranks in terms of intrinsic memorization ability?
+Query 4: On a percentage scale from 0 to 100%, how well do you think Barbara performed on the laboratory portion in the second evaluation?
+Query 5: On a percentage scale from 0 to 100%, how well do you think Lou performed on the laboratory portion in the second evaluation?
+Query 6: On a percentage scale from 0 to 100%, how well do you think Casey performed on the laboratory portion in the fourth evaluation?
+Query 7: In a new evaluation later this same day, who do you think would do better, Barbara and Lou (Pair 1) or Casey and Ajax (Pair 2), and by how much?
+<END_SCENARIO>
+
+<START_LANGUAGE_TO_WEBPPL_CODE>
+// CONDITIONS
+In the first evaluation, Barbara and Ajax passed.
+  condition(passed({pair: ['barbara', 'ajax'], evaluation: 1}))
+In the second evaluation, Barbara and Lou failed.
+  condition(failed({pair: ['barbara', 'lou'], evaluation: 2}))
+In the third evaluation, Barbara and Casey passed.
+  condition(passed({pair: ['barbara', 'casey'], evaluation: 3}))
+In the fourth evaluation, Lou and Casey passed.
+ condition(passed({pair: ['lou', 'casey'], evaluation: 4}))
+
+// QUERIES
+Query 1: Out of 100 random students, where do you think Barbara ranks in terms of intrinsic memorization ability? 
+  intrinsic_memorization_rank({student: 'barbara', out_of_n_students: 100})
+Query 2: Out of 100 random students, where do you think Lou ranks in terms of intrinsic memorization ability?
+  intrinsic_memorization_rank({student: 'lou', out_of_n_students: 100})
+Query 3: Out of 100 random students, where do you think Casey ranks in terms of intrinsic memorization ability?
+  intrinsic_memorization_rank({student: 'casey', out_of_n_students: 100})
+Query 4: On a percentage scale from 0 to 100%, how well do you think Barbara performed on the laboratory portion in the second evaluation?
+   laboratory_portion_performance_in_evaluation({student: 'barbara', evaluation: 2}) 
+Query 5: On a percentage scale from 0 to 100%, how well do you think Lou performed on the laboratory portion in the second evaluation?
+  laboratory_portion_performance_in_evaluation({student: 'lou', evaluation: 2}) 
+Query 6: On a percentage scale from 0 to 100%, how well do you think Casey performed on the laboratory portion in the fourth evaluation?
+  laboratory_portion_performance_in_evaluation({student: 'casey', evaluation: 4}) 
+<END_LANGUAGE_TO_WEBPPL_CODE>
+
+<START_SCRATCHPAD>
+Intrinsic memorization ability is an underlying, constant factor about a given student, and this varies a lot between students -- in general, students can have poor, middling,  strong memorization abilities.
+
+A student's intrinsic memorization ranking out of n other students is the number of other students we might expect them to be stronger than out of N total random students.
+
+A student's laboratory performance varies from evaluation to evaluation. A student who is intrinsically good at memorization may have a very good live laboratory performance, very bad performance, or something in between. How they do is somewhat down to chance, and the description also says that performance is finicky. There's probably SOME relationship between memorization and live laboratory performance, because strong students are proabably more experienced in the class and weaker students probably will mess up on lots of given exams.
+
+How well someone does on the lab on average if they have low, moderate, or very good performance.
+
+An student's written exam performance in a given evaluation is some transformation on top of their  memorization ability.
+
+A student pair's overall score in an evaluation is the sum of their average performance on the written exam, plus their average performance on the live lab, in that particular evaluation.
+
+A student pair passes an evaluation if they get higher than a passing score in that evaluation.
+
+A student pair fails if they didn't pass the evaluation.
+
+<START_CONCEPT_TRACE>
+- intrinsic_memorization_ability
+- intrinsic_memorization_rank
+  - depends on: intrinsic_memorization_ability
+
+- laboratory_portion_performance_in_evaluation
+  - depends on: intrinsic_memorization_ability
+
+- student_written_exam_in_evaluation
+  - depends on: intrinsic_memorization_ability
+
+-  student_pair_overall_score_in_evaluation
+  - depends on: student_written_exam_in_evaluation, laboratory_portion_performance_in_evaluation
+- passed
+  - depends on: student_pair_overall_score_in_evaluation
+- failed
+  - depends on: passed
+<END_CONCEPT_TRACE>
+<END_SCRATCHPAD>
+
+<START_WEBPPL_MODEL>
+var model = function() {
+    // BACKGROUND KNOWLEDGE
+    // Intrinsic memorization
+     ability is an underlying, constant factor about a given student, and this varies a lot between students -- in general, students can have poor, middling,  strong memorization abilities.
+    var intrinsic_memorization_ability = mem(function ({student}) {
+      // It's probably reasonable to think that students are uniformly distributed around being poor, average, or strong at memorization.
+      var parameter_poor_memorization_prior = 0.33; // Prior that someone falls into this category.
+      var parameter_average_memorization_prior = 0.33;
+      var parameter_strong_memorization_prior = 0.34;
+
+      // On an arbitrary scale centered around 100.
+      var poor_mean = 80; 
+      var average_mean = 100;
+      var strong_mean = 140;
+      var parameter_intrinsic_memorization_variance = 10; // How much people vary in a given category of memorization ability.
+
+      // Draw the mean (for this category) for this particular student.
+      var parameter_intrinsic_memorization_average = categorical({ps: [parameter_poor_memorization_prior, parameter_average_memorization_prior, parameter_strong_memorization_prior], 
+      vs: [poor_mean, average_mean, strong_mean]});
+
+      // Draw the value noisly around the average for this student.
+      return Math.max(gaussian(parameter_intrinsic_memorization_average,  parameter_intrinsic_memorization_variance), 0);
+    })
+
+   // A student's intrinsic memorization ranking out of n other students is the number of other students we might expect them to be stronger than out of N total random students.
+    var intrinsic_memorization_rank = function({student, out_of_n_students}) {
+        // Generate out_of_n_students - 1 other random student IDs
+        var random_student_ids = mapN(function(x) {return uniform(0, 1000)}, out_of_n_students - 1)
+        
+        // Total number of random other students this student is better at memorization than.
+        return sum(map(
+            function(random_student_id) {
+              return intrinsic_memorization_ability({student: student}) > intrinsic_memorization_ability({student: random_student_id})}, random_student_ids))
+    }
+
+    // A student's laboratory performance varies from evaluation to evaluation. A student who is intrinsically good at memorization may have a very good live laboratory performance, very bad performance, or something in between. How they do is somewhat down to chance, and the description also says that performance is finicky. There's probably SOME relationship between memorization and live laboratory performance, because strong students are proabably more experienced in the class and weaker students probably will mess up on lots of given exams.
+    var laboratory_portion_performance_in_evaluation = mem(function({student, evaluation}) {
+      // Let's model laboratory performance as having some structure, rather than just modeling it as a simple Gaussian. We'll give a prior that a student does very poorly, moderately well, or very well on a given lab, and we'll parameterize this as a function of their intrinsic memorization ability to capture the dependency between good students and good lab performance in general.
+
+      // Prior probability that an student performs poorly, average, or well on a given lab.
+     var parameter_poor_lab_prior = 
+          intrinsic_memorization_ability(student) > 120 ? 0.15 : // Strong students are pretty unlikely to do very poorly, though it is finicky so there's a possibility.
+               intrinsic_memorization_ability(student) < 80 ?  0.8 : // Weak students often have very poor lab performance.
+                                                     0.3;  // Otherwise a moderate likelihood that they do badly.
+      var parameter_moderate_lab_prior = intrinsic_memorization_ability(student) > 120 ? 0.2 : // Strong students have some chance of doing moderately
+               intrinsic_memorization_ability(student) < 80 ?  0.15 : // Weak students are less likely to perform moderately.
+                                                        0.5; // Medium students often perform moderately
+      var parameter_very_good_lab_prior = intrinsic_memorization_ability(student) > 120 ? 0.65 :  // Strong students often perform very well.
+               intrinsic_memorization_ability(student) < 80 ?  0.05 : // Weak students hardly ever perform very well.
+                                                        0.2; // Otherwise generally rare to do very well for a mdoerate student.
+
+      // How well someone does on the lab on average if they have low, moderate, or very good performance.
+      var poor_lab_average = 30; 
+      var moderate_lab_average = 50; // They said its notoriously finicky so we'll say that they could get a 50%!
+      var very_good_lab_average = 85;  // Very good on a lab is 85% or above.
+      var lab_performance_variance = 10;
+      
+      // How accurate this particular athlete does on average, drawn from the categorical.
+      var this_student_lab_performance_average = categorical({ps: [parameter_poor_lab_prior, parameter_moderate_lab_prior, parameter_very_good_lab_prior], 
+      vs: [poor_lab_average, moderate_lab_average, very_good_lab_average]});
+
+      return Math.min(Math.max(gaussian(this_student_lab_performance_average, lab_performance_variance), 0), 100)
+    })
+
+    // An student's written exam performance in a given evaluation is some transformation on top of their  memorization ability.
+    var student_written_exam_in_evaluation = mem(function({student, evaluation}) {
+      // Assume their written exam score in a given round is some constant but noisy transformation of their underlying strength. We'll just say the constant is 1 for now.
+      return intrinsic_memorization_ability({student : student});
+    })
+
+    
+    // A student pair's overall score in an evaluation is the sum of their average performance on the written exam, plus their average performance on the live lab, in that partiuclar evaluation.
+    var student_pair_overall_score_in_evaluation = function({pair, evaluation}) {
+      var average_pair_written_exam_in_evaluation = mean(map(function(student) { return student_written_exam_in_evaluation({student: student, evaluation : evaluation}) }, pair));
+
+      var average_lab_performance_in_evaluation = mean(map(function(student) { return laboratory_portion_performance_in_evaluation({student: student, evaluation : evaluation}) }, pair));
+
+      return average_pair_written_exam_in_evaluation + average_lab_performance_in_evaluation;
+    }
+
+    // A student pair passes an evaluation if they get higher than a passing score in that evaluation.
+    var passed = function({pair, evaluation}){
+      var passing_score = 100 + 100; // Score for both portions.
+      return student_pair_overall_score_in_evaluation({pair : pair, evaluation : evaluation}) > passing_score;
+    }
+    
+    // A student pair fails if they didn't pass the evaluation.
+    var failed = function({pair, evaluation}){ 
+      return !passed({pair: pair, evaluation : evaluation})
+    }
+    
+    
+    // CONDITIONS
+    // In the first evaluation, Barbara and Ajax passed.
+    condition(passed({pair: ['barbara', 'ajax'], evaluation: 1}))
+    // In the second evaluation, Barbara and Lou failed.
+    condition(failed({pair: ['barbara', 'lou'], evaluation: 2}))
+    // In the third evaluation, Barbara and Casey passed.
+    condition(passed({pair: ['barbara', 'casey'], evaluation: 3}))
+    // In the fourth evaluation, Lou and Casey passed.
+    condition(passed({pair: ['lou', 'casey'], evaluation: 4}))
+    
+    // QUERIES
+    // Query 1: Out of 100 random students, where do you think Barbara ranks in terms of intrinsic memorization ability? 
+    // Query 2: Out of 100 random students, where do you think Lou ranks in terms of intrinsic memorization ability?
+    // Query 3: Out of 100 random students, where do you think Casey ranks in terms of intrinsic memorization ability?
+    // Query 4: On a percentage scale from 0 to 100%, how well do you think Barbara performed on the laboratory portion in the second evaluation?
+    // Query 5: On a percentage scale from 0 to 100%, how well do you think Lou performed on the laboratory portion in the second evaluation?
+    // Query 6: On a percentage scale from 0 to 100%, how well do you think Casey performed on the laboratory portion in the fourth evaluation?
+    return {
+        query1: intrinsic_memorization_rank({student: 'barbara', out_of_n_students: 100}),
+        query2: intrinsic_memorization_rank({student: 'lou', out_of_n_students: 100}), 
+        query3: intrinsic_memorization_rank({student: 'casey', out_of_n_students: 100}),
+        query4: laboratory_portion_performance_in_evaluation({student: 'barbara', evaluation: 2}), 
+        query5: laboratory_portion_performance_in_evaluation({student: 'lou', evaluation: 2}), 
+        query6: laboratory_portion_performance_in_evaluation({student: 'casey', evaluation: 4}) 
+
+    }
+
+}
+// Now we run the model and collect an estimate.
+var posterior = Infer({model: model, method: "MCMC", samples: 10000});
+viz(posterior);
+<END_WEBPPL_MODEL>
