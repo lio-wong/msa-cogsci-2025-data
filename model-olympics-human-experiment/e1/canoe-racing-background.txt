@@ -1,0 +1,12 @@
+In this event, the athletes are competing in a series of canoe racing tournaments. Each tournament consists of a series of races. In each race, athletes compete as part of a team. 
+
+An athlete's intrinsic strength remains constant throughout a tournament. An athlete neither gets stronger nor weaker between races. You can assume that all matches take place on the same day.
+
+Athletes also vary in the effort that they put into any given race. Most of the time, people row with a moderately high amount of effort. Sometimes, an athlete won’t put in much effort and will row with only a fraction of their strength. Other times, they may put in a lot of effort and row extra hard, beyond what their intrinsic strength would suggest.
+
+How fast a team rows overall in any given race is determined by the average rowing speed of each athlete. How fast an athlete rows in a given race is determined by their intrinsic strength, modified by how much effort they put in (a lower fraction of their intrinsic strength if they don’t put in much effort, or even more than their strength if they put in more effort).
+
+The team that rows the fastest (highest team speed) in a given race wins.
+                   
+Athletes compete either individually or as a team.
+All matches take place on the same day.

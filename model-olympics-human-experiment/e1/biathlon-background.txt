@@ -1,0 +1,14 @@
+In this event, the athletes are competing in a series of biathlon relay tournaments, a winter sport that combines cross-country skiing races and rifle shooting. Each tournament consists of a series of rounds.
+
+In each round, athletes compete on teams. In a biathlon, each athlete first skis a short distance, then shoots at a target.
+
+Athletes are scored based on how fast they ski and how accurately they shoot. An athlete’s ability to ski is based on their intrinsic strength. Note that an athlete’s intrinsic strength remains constant throughout a tournament. An athlete neither gets stronger nor weaker between rounds. You can assume that all matches take place on the same day.
+
+An athlete’s ability to shoot accurately is unrelated to their intrinsic strength. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. Athlete’s shooting accuracy in any given round is also somewhat down to chance. 
+
+A team’s overall score is determined by the sum of the scores for each athlete per event. Ski performance and shooting accuracy are weighted equally. Athletes receive more points for skiing faster and more points for achieving a high shooting accuracy.
+
+The team that completes the course with the highest score wins. 
+
+Athletes compete either individually or as a team.
+All matches take place on the same day.

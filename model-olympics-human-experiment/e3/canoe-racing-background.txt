@@ -1,0 +1,3 @@
+In this event, the athletes are competing in a series of canoe races. In each race, the team that wins depends on the average speed with which the athletes are able to row, based on their intrinsic strength modulated by other factors including how much effort they put in to that race.
+Athletes compete either individually or as a team.
+All matches take place on the same day.
