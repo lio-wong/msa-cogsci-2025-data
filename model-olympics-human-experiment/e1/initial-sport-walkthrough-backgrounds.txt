@@ -1,0 +1,69 @@
+## As described in the supplemental, participants in this experiment were also shown an initial version of the detailed background information for each sport (with an example tournament) prior to reading each specific vignette (which then replicated the detailed background information, shown in the sport-background.txt files). These detailed backgrounds are reproduced below for all three sports.
+
+<TUG-OF-WAR>
+You will reason about a series of tug-of-war tournaments. Each tournament consists of a series of matches.
+In each match, athletes compete as part of a team. For example, in the Tournament shown below: 
+
+Tournament: 
+\begin{itemize}
+    \item Match 1: Alice and Bob beat Jan and Steve
+    \item Match 2: Alice and Bob lost to Jan and Steve.
+\end{itemize}
+
+Note that an athlete’s intrinsic strength remains constant throughout a tournament. For example, Alice was equally strong in Match 1 and in Match 2. An athlete neither gets stronger nor weaker between matches. You can assume that all matches take place on the same day.
+
+Athletes also vary in the effort that they put into any given match. Most of the time, people pull with a moderately high amount of effort. Sometimes, an athlete won’t put in much effort and will pull with only a fraction of their strength. Other times, they may put in a lot of effort and pull extra hard, beyond what their intrinsic strength would suggest.
+
+For example, it's possible that Alice, Bob, or both of them didn't put in much effort in Match 2. Or, it's possible that one or both of the members on Jan or Steve's team put in lots of effort in Match 2.
+
+How hard a team pulls overall in any given match is determined by the total amount that all of the athletes on the team pull in that match.
+
+How hard each athlete pulls in a given match is determined by their intrinsic strength, modified by how much effort they put in (a lower fraction of their intrinsic strength if they don’t put in much effort, or even more than their strength if they put in more effort).
+
+The team that pulls the hardest in a given match wins.
+<TUG-OF-WAR>
+
+<CANOE-RACING>
+
+You will reason about a series of canoe racing tournaments. Each tournament consists of a series of races.
+In each race, athletes compete as part of a team. For example, in the Tournament shown below: 
+
+Tournament: 
+\begin{itemize}
+    \item Race 1: Alice and Bob beat Jan and Steve
+    \item Race 2: Alice and Bob lost to Jan and Steve.
+\end{itemize}
+
+Note that an athlete's intrinsic strength remains constant throughout a tournament. For example, Alice was equally strong in Race 1 and in Race 2. An athlete neither gets stronger nor weaker between races. You can assume that all matches take place on the same day.
+
+Athletes also vary in the effort that they put into any given race. Most of the time, people row with a moderately high amount of effort. Sometimes, an athlete won’t put in much effort and will row with only a fraction of their strength. Other times, they may put in a lot of effort and row extra hard, beyond what their intrinsic strength would suggest.
+
+For example, it's possible that Alice, Bob, or both of them didn't put in much effort in Race 2. Or, it's possible that one or both of the members on Jan or Steve's team put in lots of effort in Race 2.
+
+How fast a team rows overall in any given race is determined by the average rowing speed of each athlete. How fast an athlete rows in a given race is determined by their intrinsic strength, modified by how much effort they put in (a lower fraction of their intrinsic strength if they don’t put in much effort, or even more than their strength if they put in more effort).
+
+The team that rows the fastest (highest team speed) in a given race wins.
+<CANOE-RACING>
+
+<BIATHALON>
+
+You will reason about a series of biathlon relay tournaments, a winter sport that combines cross-country skiing races and rifle shooting. Each tournament consists of a series of rounds.
+
+In each round, athletes compete on teams. In a biathlon, each athlete first skis a short distance, then shoots at a target.
+
+For example, see the tournament below (both athletes skid and then shot per round): 
+
+Tournament: 
+\begin{itemize}
+    \item Round 1: Alice and Bob beat Jan and Steve
+    \item Round 2: Alice and Bob lost to Jan and Steve.
+\end{itemize}
+
+Athletes are scored based on how fast they ski and how accurately they shoot. An athlete’s ability to ski is based on their intrinsic strength. Note that an athlete’s intrinsic strength remains constant throughout a tournament. For example, Alice was equally strong in Round 1 and in Round 2. An athlete neither gets stronger nor weaker between rounds. You can assume that all matches take place on the same day.
+
+An athlete’s ability to shoot accurately is unrelated to their intrinsic strength. An athlete who is intrinsically strong may be a very good shooter, a very bad shooter, or something in between. For instance, Alice may be a very strong skier but a very bad shooter. Athlete’s shooting accuracy in any given round is also somewhat down to chance. It’s possible that Alice and/or Bob had a bad shooting day in Round 2 (or Jan and/or Steve may have had an especially accurate shooting day).  
+
+A team’s overall score is determined by the sum of the scores for each athlete per event. Ski performance and shooting accuracy are weighted equally. Athletes receive more points for skiing faster and more points for achieving a high shooting accuracy.
+
+The team that completes the course with the highest score wins. 
+<BIATHALON>

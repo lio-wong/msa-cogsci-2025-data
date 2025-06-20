@@ -1,0 +1,48 @@
+[Insert Experiment Instructions]
+[Insert Domain background Information]
+
+You will answer each query by providing 5 numbers,each on a scale of 0-100 for that query. 
+
+Provide your response to all questions in the form: 
+
+{"query1": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query2": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query3": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query4": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query5": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query6": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query7": [RESPONSE1, RESPONSE2... RESPONSE5], 
+"query8": [RESPONSE1, RESPONSE2... RESPONSE5]}
+
+Each response MUST be a number between 0-100.
+
+Interpret each query as if answering on the 
+following scale from 0 to 100: 
+
+# Example scale shown below. 
+# Replace the scale with the ones used in the stimulus.
+
+*** 
+
+Out of 100 random athletes, where do you think {NAME} ranks in terms of intrinsic strength?
+
+0 = Better than 0 athletes
+25 = Better than 25 athletes
+50 = Better than 50 athletes
+75 = Better than 75 athletes
+100 = Better than 100 athletes
+***
+
+The labels indicate what the numbers mean; you may answer with any number between 0-100.
+
+Now think about the following scenario.
+
+[Insert Scenario]
+
+Questions:
+
+[Insert 8 Questions]
+
+#If using Chain-of-Thought:
+
+You may first write out your thoughts and then provide your responses.
